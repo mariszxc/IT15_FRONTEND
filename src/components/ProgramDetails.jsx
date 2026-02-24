@@ -16,7 +16,7 @@ function ProgramDetails({ program }) {
     <section className="table-card">
       <div className="table-header">
         <div>
-          <p className="chart-title">Program Details View</p>
+          <p className="chart-title">Program Details</p>
           <span className="chart-subtitle">{program.fullName}</span>
         </div>
       </div>

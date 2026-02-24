@@ -78,12 +78,8 @@ function ProgramOfferings() {
           <section className="modal-card" role="dialog" onClick={(event) => event.stopPropagation()}>
             <div className="table-header">
               <div>
-                <p className="chart-title">Program Form (Design Only)</p>
-                <span className="chart-subtitle">No backend actions are connected.</span>
+                <p className="chart-title">Program Form</p>
               </div>
-              <button className="ghost-btn small" type="button" onClick={() => setShowProgramModal(false)}>
-                Close
-              </button>
             </div>
             <div className="filter-grid">
               <label className="filter-field">
@@ -108,7 +104,7 @@ function ProgramOfferings() {
                 Cancel
               </button>
               <button className="primary-btn" type="button" onClick={() => setShowProgramModal(false)}>
-                Save (Mock)
+                Save
               </button>
             </div>
           </section>

@@ -6,8 +6,7 @@ function ProgramList({ programs, selectedCode, onSelect }) {
     <section className="table-card">
       <div className="table-header">
         <div>
-          <p className="chart-title">Program Listing</p>
-          <span className="chart-subtitle">All program offerings (mock data)</span>
+          <p className="chart-title">Program Lists</p>
         </div>
       </div>
 

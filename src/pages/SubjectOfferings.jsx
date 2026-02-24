@@ -53,7 +53,7 @@ function SubjectOfferings() {
         title="Subject Filters"
         actions={
           <button className="ghost-btn" type="button" onClick={() => setShowSubjectModal(true)}>
-            Open Subject Modal
+            Open Subject
           </button>
         }
       >
@@ -67,7 +67,7 @@ function SubjectOfferings() {
         </label>
 
         <label className="filter-field">
-          Filter by semester/term indicator
+          Filter by semester/term
           <select value={semesterFilter} onChange={(event) => setSemesterFilter(event.target.value)}>
             <option value="all">All</option>
             <option value="semester">Per Semester</option>
@@ -118,16 +118,12 @@ function SubjectOfferings() {
       {showSubjectModal && selectedSubject ? (
         <div className="modal-backdrop" role="presentation" onClick={() => setShowSubjectModal(false)}>
           <section className="modal-card" role="dialog" onClick={(event) => event.stopPropagation()}>
-            <div className="table-header">
-              <div>
-                <p className="chart-title">Subject Detail Modal</p>
-                <span className="chart-subtitle">Modal view for subject details</span>
-              </div>
+            <SubjectDetails subject={selectedSubject} />
+            <div className="modal-actions">
               <button className="ghost-btn small" type="button" onClick={() => setShowSubjectModal(false)}>
                 Close
               </button>
             </div>
-            <SubjectDetails subject={selectedSubject} />
           </section>
         </div>
       ) : null}

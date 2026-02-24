@@ -6,8 +6,7 @@ function SubjectList({ subjects, selectedCode, onSelect }) {
     <section className="table-card">
       <div className="table-header">
         <div>
-          <p className="chart-title">Subject Listing</p>
-          <span className="chart-subtitle">All subject offerings (mock data)</span>
+          <p className="chart-title">Subject Lists</p>
         </div>
       </div>
 

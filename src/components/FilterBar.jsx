@@ -6,7 +6,6 @@ function FilterBar({ title, children, actions }) {
       <div className="table-header">
         <div>
           <p className="chart-title">{title}</p>
-          <span className="chart-subtitle">Search and filter controls</span>
         </div>
         {actions ? <div className="filter-actions">{actions}</div> : null}
       </div>

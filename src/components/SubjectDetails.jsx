@@ -21,7 +21,7 @@ function SubjectDetails({ subject }) {
     <section className="table-card">
       <div className="table-header">
         <div>
-          <p className="chart-title">Subject Details View</p>
+          <p className="chart-title">Subject Details</p>
           <span className="chart-subtitle">
             {subject.code} - {subject.title}
           </span>
