@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../App.css";
 import eduManzanoLogo from "../assets/Edu manzanoPORTAL.png";
@@ -6,12 +6,7 @@ import eduManzanoLogo from "../assets/Edu manzanoPORTAL.png";
 function Login() {
   const [showLogin, setShowLogin] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [animateBlobs, setAnimateBlobs] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    setAnimateBlobs(true);
-  }, []);
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -21,9 +16,7 @@ function Login() {
   return (
     <div className="app">
       <div
-        className={`welcome-screen ${showLogin ? "blur" : ""} ${
-          animateBlobs ? "animated" : ""
-        }`}
+        className={`welcome-screen ${showLogin ? "blur" : ""} animated`}
       >
         <div className="blob-aux" aria-hidden="true"></div>
         <img

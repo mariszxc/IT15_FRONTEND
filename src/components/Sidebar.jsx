@@ -1,14 +1,11 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import eduManzanoLogo from "../assets/Edu manzano.png";
+import eduManzanoLogo from "../assets/EDUMANZANOSYSTEM.png";
 
 const navItems = [
   { label: "Dashboard", path: "/dashboard" },
-  { label: "Students", path: "/dashboard/students" },
-  { label: "Courses", path: "/dashboard/courses" },
-  { label: "Enrollment", path: "/dashboard/enrollment" },
-  { label: "Reports", path: "/dashboard/reports" },
-  { label: "Settings", path: "/dashboard/settings" },
+  { label: "Program Offerings", path: "/dashboard/programs" },
+  { label: "Subject Offerings", path: "/dashboard/subjects" },
 ];
 
 function Sidebar() {

@@ -5,17 +5,14 @@ import Topbar from "../components/Topbar";
 import "../styles/dashboard.css";
 
 const pageTitles = {
-  "/dashboard": "Enrollment Overview",
-  "/dashboard/students": "Students",
-  "/dashboard/courses": "Courses",
-  "/dashboard/enrollment": "Enrollment",
-  "/dashboard/reports": "Reports",
-  "/dashboard/settings": "Settings",
+  "/dashboard": "Dashboard Module",
+  "/dashboard/programs": "Program Offerings Module",
+  "/dashboard/subjects": "Subject Offerings Module",
 };
 
 function DashboardLayout() {
   const location = useLocation();
-  const title = pageTitles[location.pathname] || "Enrollment Overview";
+  const title = pageTitles[location.pathname] || "Dashboard Module";
 
   return (
     <div className="dashboard">
