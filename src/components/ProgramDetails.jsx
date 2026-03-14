@@ -1,11 +1,11 @@
 import React from "react";
 import { getSubjectsForProgramYear } from "../data/catalogData";
 
-function ProgramDetails({ program }) {
+function ProgramDetails({ program, isModal = false }) {
   if (!program) {
     return (
-      <section className="table-card">
-        <p className="empty-state">Select a program to view details.</p>
+      <section className={isModal ? "course-details-content" : "table-card"}>
+        <p className="empty-state">Select a course to view details.</p>
       </section>
     );
   }
@@ -13,22 +13,26 @@ function ProgramDetails({ program }) {
   const yearLevels = Object.keys(program.yearLevels || {});
 
   return (
-    <section className="table-card">
+    <section className={isModal ? "course-details-content" : "table-card"}>
       <div className="table-header">
         <div>
-          <p className="chart-title">Program Details</p>
+          <p className="chart-title">Course Details</p>
           <span className="chart-subtitle">{program.fullName}</span>
         </div>
       </div>
 
       <div className="details-grid">
         <div className="info-item">
-          <strong>Program Code</strong>
+          <strong>Course Code</strong>
           <span>{program.code}</span>
         </div>
         <div className="info-item">
-          <strong>Program Type</strong>
+          <strong>Course Type</strong>
           <span>{program.type}</span>
+        </div>
+        <div className="info-item">
+          <strong>Department</strong>
+          <span>{program.department || "Unassigned Department"}</span>
         </div>
         <div className="info-item">
           <strong>Duration</strong>

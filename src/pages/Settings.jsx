@@ -1,45 +1,45 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { logUserActivity } from "../utils/activityLog";
 
 function Settings() {
-  const [savedAt, setSavedAt] = useState("");
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
-  const handleSaveSettings = () => {
-    setSavedAt(
-      new Date().toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-      })
-    );
+  useEffect(() => {
+    const savedMode = localStorage.getItem("dashboard_theme_mode") || "light";
+    const dark = savedMode === "dark";
+    setIsDarkMode(dark);
+    document.documentElement.setAttribute("data-theme", savedMode);
+  }, []);
+
+  const handleToggleMode = () => {
+    const nextDarkMode = !isDarkMode;
+    const nextMode = nextDarkMode ? "dark" : "light";
+
+    setIsDarkMode(nextDarkMode);
+    localStorage.setItem("dashboard_theme_mode", nextMode);
+    document.documentElement.setAttribute("data-theme", nextMode);
+
+    logUserActivity({
+      action: "Update",
+      entity: "Settings",
+      description: `Switched dashboard theme to ${nextMode} mode.`,
+      metadata: { theme: nextMode },
+    });
   };
 
   return (
-    <div className="page-shell">
-      <section className="info-card">
- 
-        {savedAt && <span className="chart-subtitle settings-saved">Saved at {savedAt}</span>}
-        <div className="settings-grid">
-          <div className="settings-item">
-            <p>Academic year</p>
-            <h3>2025 - 2026</h3>
-            <span>Default intake schedule</span>
-          </div>
-          <div className="settings-item">
-            <p>Notifications</p>
-            <h3>Enabled</h3>
-            <span>Email and SMS alerts</span>
-          </div>
-          <div className="settings-item">
-            <p>API status</p>
-            <h3>Ready</h3>
-            <span>Awaiting Laravel endpoint</span>
-          </div>
+    <div className="page-shell settings-theme-shell">
+      <div className="settings-theme-panel">
+        <div>
+          <h2>Theme Mode</h2>
+          <p className="chart-subtitle">Use the slide switch to toggle between Light and Dark mode.</p>
         </div>
-        <div className="settings-actions">
-          <button className="primary-btn" type="button" onClick={handleSaveSettings}>
-            Save
-          </button>
-        </div>
-      </section>
+        <label className="theme-toggle" aria-label="Toggle dark mode">
+          <input type="checkbox" checked={isDarkMode} onChange={handleToggleMode} />
+          <span className="theme-toggle-slider" />
+          <span className="theme-toggle-label">{isDarkMode ? "Dark" : "Light"}</span>
+        </label>
+      </div>
     </div>
   );
 }

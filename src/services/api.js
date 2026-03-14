@@ -43,5 +43,7 @@ export const registerRequest = (payload) => api.post("/register", payload);
 export const meRequest = () => api.get("/me");
 export const logoutRequest = () => api.post("/logout");
 export const dashboardMetricsRequest = () => api.get("/dashboard");
+export const coursesRequest = (params = {}) => api.get("/courses", { params });
+export const schoolDaysRequest = (params = {}) => api.get("/school-days", { params });
 
 export default api;

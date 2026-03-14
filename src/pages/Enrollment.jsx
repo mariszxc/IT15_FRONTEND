@@ -1,16 +1,130 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { downloadCsv } from "../utils/exportCsv";
+import { logUserActivity } from "../utils/activityLog";
+import api from "../services/api";
+import { enrollStudentRecord, getEnrollmentRecords } from "../utils/enrollmentStore";
 
-const enrollmentPipeline = [
-  { label: "Submitted", count: "1,482", note: "Awaiting initial review" },
-  { label: "Validated", count: "1,204", note: "Credentials verified" },
-  { label: "For Approval", count: "436", note: "Registrar queue" },
-  { label: "Approved", count: "982", note: "Ready for enrollment" },
-];
+const getCurrentBatch = () =>
+  new Date().toLocaleDateString(undefined, { month: "long", year: "numeric" });
 
 function Enrollment() {
+  const [students, setStudents] = useState([]);
+  const [studentStatus, setStudentStatus] = useState({ loading: true, error: "" });
+  const [searchType, setSearchType] = useState("student_number");
+  const [searchValue, setSearchValue] = useState("");
+  const [actionMessage, setActionMessage] = useState({ type: "", text: "" });
+  const [records, setRecords] = useState(() => getEnrollmentRecords());
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadStudents() {
+      setStudentStatus({ loading: true, error: "" });
+
+      try {
+        const response = await api.get("/students", { params: { per_page: 500 } });
+
+        if (!isMounted) {
+          return;
+        }
+
+        const payload = response.data;
+        const rows = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
+
+        setStudents(rows);
+        setStudentStatus({ loading: false, error: "" });
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setStudents([]);
+        setStudentStatus({
+          loading: false,
+          error: error.response?.data?.message || "Unable to load students for enrollment.",
+        });
+      }
+    }
+
+    loadStudents();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const enrollmentSummary = useMemo(() => {
+    const submitted = records.filter((record) => record.submitted).length;
+    const pending = records.filter((record) => record.pending).length;
+    const approved = records.filter((record) => record.approved).length;
+
+    return [
+      { label: "Batch", count: records[0]?.batch || getCurrentBatch()},
+      { label: "Submitted", count: String(submitted)},
+      { label: "Pending", count: String(pending), note: "Awaiting approval" },
+      { label: "Approved", count: String(approved), note: "Ready and enrolled" },
+    ];
+  }, [records]);
+
+  const filteredStudents = useMemo(() => {
+    const key = searchValue.trim().toLowerCase();
+
+    if (!key) {
+      return students.slice(0, 10);
+    }
+
+    return students.filter((student) => {
+      if (searchType === "student_number") {
+        return String(student.student_number || "").toLowerCase().includes(key);
+      }
+
+      const fullName = `${student.first_name || ""} ${student.last_name || ""}`.trim().toLowerCase();
+      return (
+        fullName.includes(key) ||
+        String(student.first_name || "").toLowerCase().includes(key) ||
+        String(student.last_name || "").toLowerCase().includes(key)
+      );
+    });
+  }, [students, searchType, searchValue]);
+
   const handleExportEnrollment = () => {
-    downloadCsv("enrollment-pipeline.csv", enrollmentPipeline);
+    downloadCsv("enrollment-pipeline.csv", enrollmentSummary);
+    logUserActivity({
+      action: "Export",
+      entity: "Enrollment",
+      description: "Exported enrollment pipeline report.",
+    });
+  };
+
+  const handleEnrollStudent = (student) => {
+    if (!student) {
+      setActionMessage({ type: "error", text: "No student selected for enrollment." });
+      return;
+    }
+
+    const record = enrollStudentRecord(student);
+    setRecords(getEnrollmentRecords());
+
+    logUserActivity({
+      action: "Enroll",
+      entity: "Student",
+      description: `Enrolled student ${record.studentName || student.student_number}.`,
+      metadata: {
+        studentId: student.id,
+        studentNumber: student.student_number,
+        batch: record.batch,
+      },
+    });
+
+    setActionMessage({
+      type: "success",
+      text: `${record.studentName || "Student"} is now enrolled for ${record.batch}.`,
+    });
+    setSearchValue("");
+  };
+
+  const handleEnrollFirstMatch = () => {
+    handleEnrollStudent(filteredStudents[0]);
   };
 
   return (
@@ -20,12 +134,45 @@ function Enrollment() {
           <div>
             <h2>Enrollment Status</h2>
           </div>
-          <button className="ghost-btn small" type="button" onClick={handleExportEnrollment}>
-            Export
-          </button>
+          <div className="filter-actions" style={{ gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <select
+              value={searchType}
+              onChange={(event) => setSearchType(event.target.value)}
+              className="ghost-btn"
+              style={{ borderRadius: 10, padding: "8px 12px", minWidth: 160 }}
+            >
+              <option value="student_number">Search by Student Number</option>
+              <option value="name">Search by Name</option>
+            </select>
+            <input
+              type="text"
+              value={searchValue}
+              onChange={(event) => setSearchValue(event.target.value)}
+              placeholder={
+                searchType === "student_number"
+                  ? "Enter student number"
+                  : "Enter student name"
+              }
+              className="ghost-btn"
+              style={{ borderRadius: 10, padding: "8px 12px", minWidth: 220 }}
+            />
+            <button className="ghost-btn small" type="button" onClick={handleEnrollFirstMatch}>
+              Enroll
+            </button>
+            <button className="ghost-btn small" type="button" onClick={handleExportEnrollment}>
+              Export
+            </button>
+          </div>
         </div>
+
+        {actionMessage.text && (
+          <p className={`dashboard-feedback ${actionMessage.type === "error" ? "error" : ""}`}>
+            {actionMessage.text}
+          </p>
+        )}
+
         <div className="pipeline">
-          {enrollmentPipeline.map((stage) => (
+          {enrollmentSummary.map((stage) => (
             <div key={stage.label} className="pipeline-card">
               <h3>{stage.count}</h3>
               <p>{stage.label}</p>
@@ -33,6 +180,39 @@ function Enrollment() {
             </div>
           ))}
         </div>
+
+        {studentStatus.loading && <p className="dashboard-feedback">Loading students...</p>}
+        {studentStatus.error && <p className="dashboard-feedback error">{studentStatus.error}</p>}
+
+        {!studentStatus.loading && !studentStatus.error && (
+          <ul className="recent-list student-list" style={{ marginTop: 16 }}>
+            {filteredStudents.length === 0 && (
+              <li className="empty-state">No students found for the selected search option.</li>
+            )}
+
+            {filteredStudents.slice(0, 12).map((student) => (
+              <li key={student.id} className="student-row">
+                <div className="student-row-main">
+                  <div>
+                    <strong>
+                      {student.first_name} {student.last_name}
+                    </strong>
+                    <p style={{ marginTop: 4, color: "var(--text-muted)" }}>
+                      Student No: {student.student_number || "-"}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="ghost-btn small"
+                    onClick={() => handleEnrollStudent(student)}
+                  >
+                    Enroll
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </div>
   );

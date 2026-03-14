@@ -1,25 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { downloadCsv } from "../utils/exportCsv";
 import api from "../services/api";
-
-
-const studentSnapshot = [
-  {
-    label: "Freshmen Applicants",
-    value: "1,240",
-    note: "Awaiting document validation",
-  },
-  {
-    label: "Transfers",
-    value: "320",
-    note: "Includes ladderized programs",
-  },
-  {
-    label: "Returning Students",
-    value: "3,260",
-    note: "Auto-enrolled for next term",
-  },
-];
+import { logUserActivity } from "../utils/activityLog";
+import { getEnrollmentRecordForStudent } from "../utils/enrollmentStore";
 
 function Students() {
   const [studentForm, setStudentForm] = useState({
@@ -34,13 +16,18 @@ function Students() {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [profileStatus, setProfileStatus] = useState({ loading: false, error: "" });
   const [showAddForm, setShowAddForm] = useState(false);
+  const [search, setSearch] = useState("");
+  const [searchMode, setSearchMode] = useState("name");
 
   const loadStudents = async () => {
     setStudentsStatus({ loading: true, error: "" });
 
     try {
-      const response = await api.get("/students");
-      setStudents(response.data?.data || []);
+      const response = await api.get("/students", { params: { per_page: 500 } });
+      const payload = response.data;
+      const rows = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
+
+      setStudents(rows);
       setStudentsStatus({ loading: false, error: "" });
     } catch (error) {
       setStudentsStatus({
@@ -54,9 +41,25 @@ function Students() {
     loadStudents();
   }, []);
 
-  const handleExportStudents = () => {
-    downloadCsv("students-snapshot.csv", studentSnapshot);
-  };
+  const filteredStudents = students.filter((student) => {
+    const searchKey = search.trim().toLowerCase();
+
+    if (!searchKey) {
+      return true;
+    }
+
+    if (searchMode === "student_number") {
+      return String(student.student_number || "").toLowerCase().includes(searchKey);
+    }
+
+    const fullName = `${student.first_name || ""} ${student.last_name || ""}`.trim().toLowerCase();
+
+    return (
+      fullName.includes(searchKey) ||
+      String(student.first_name || "").toLowerCase().includes(searchKey) ||
+      String(student.last_name || "").toLowerCase().includes(searchKey)
+    );
+  });
 
   const capitalizeFirstLetter = (value) => {
     const trimmed = value.trimStart();
@@ -94,6 +97,12 @@ function Students() {
         email: studentForm.email,
       });
 
+      logUserActivity({
+        action: "Add",
+        entity: "Student",
+        description: `Added student ${studentForm.firstName} ${studentForm.lastName}.`,
+      });
+
       handleFormCancel();
       setFormStatus({ type: "success", message: "Student saved successfully." });
       await loadStudents();
@@ -121,10 +130,18 @@ function Students() {
 
     try {
       const response = await api.get(`/students/${student.id}`);
-      setSelectedStudent(response.data?.data || student);
+      const profile = response.data?.data || student;
+      const enrollment = getEnrollmentRecordForStudent(profile || student);
+      setSelectedStudent({ ...profile, enrollment });
       setProfileStatus({ loading: false, error: "" });
+      logUserActivity({
+        action: "View",
+        entity: "Student Profile",
+        description: `Viewed profile of ${student.first_name} ${student.last_name}.`,
+      });
     } catch (error) {
-      setSelectedStudent(student);
+      const enrollment = getEnrollmentRecordForStudent(student);
+      setSelectedStudent({ ...student, enrollment });
       setProfileStatus({
         loading: false,
         error: error.response?.data?.message || "Unable to load student profile.",
@@ -142,7 +159,8 @@ function Students() {
       <section className="info-card">
         <div className="table-header">
           <div>
-            <h2>Student Directory</h2>
+            <h2>Students</h2>
+            <span className="chart-subtitle">Showing {filteredStudents.length} of {students.length} students</span>
           </div>
           <button
             className="primary-btn"
@@ -151,23 +169,26 @@ function Students() {
           >
             {showAddForm ? "Close" : "Add Student"}
           </button>
-        </div>
-        <div className="info-grid">
-          {studentSnapshot.map((item) => (
-            <div key={item.label} className="info-item">
-              <p>{item.label}</p>
-              <h3>{item.value}</h3>
-              <span>{item.note}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="info-card">
-        <div className="table-header">
-          <div>
-            <h2>Recent Students</h2>
-          </div>
+          <label className="filter-field" style={{ minWidth: 300 }}>
+            Search students by
+            <select
+              value={searchMode}
+              onChange={(event) => setSearchMode(event.target.value)}
+            >
+              <option value="name">Name</option>
+              <option value="student_number">Student Number</option>
+            </select>
+            <input
+              type="text"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={
+                searchMode === "student_number"
+                  ? "Search by student number"
+                  : "Search by student name"
+              }
+            />
+          </label>
         </div>
 
         {studentsStatus.loading && <p className="dashboard-feedback">Loading students...</p>}
@@ -175,8 +196,8 @@ function Students() {
 
         {!studentsStatus.loading && !studentsStatus.error && (
           <ul className="recent-list student-list">
-            {students.length === 0 && <li className="empty-state">No students added yet.</li>}
-            {students.map((student) => (
+            {filteredStudents.length === 0 && <li className="empty-state">No students match your search.</li>}
+            {filteredStudents.map((student) => (
               <li key={student.id} className="student-row">
                 <div className="student-row-main">
                   <div>
@@ -233,6 +254,26 @@ function Students() {
                 <div className="info-item">
                   <p>Email</p>
                   <strong>{selectedStudent.email}</strong>
+                </div>
+                <div className="info-item">
+                  <p>Enrollment Status</p>
+                  <strong>{selectedStudent.enrollment?.enrollmentStatus || "Not Enrolled"}</strong>
+                </div>
+                <div className="info-item">
+                  <p>Batch</p>
+                  <strong>{selectedStudent.enrollment?.batch || "-"}</strong>
+                </div>
+                <div className="info-item">
+                  <p>Submitted</p>
+                  <strong>{selectedStudent.enrollment?.submitted ? "Yes" : "No"}</strong>
+                </div>
+                <div className="info-item">
+                  <p>Pending</p>
+                  <strong>{selectedStudent.enrollment?.pending ? "Yes" : "No"}</strong>
+                </div>
+                <div className="info-item">
+                  <p>Approved</p>
+                  <strong>{selectedStudent.enrollment?.approved ? "Yes" : "No"}</strong>
                 </div>
               </div>
             )}

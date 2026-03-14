@@ -15,6 +15,7 @@ function ProgramCard({ program, selected, onClick }) {
       </div>
       <p className="program-name">{program.fullName}</p>
       <div className="program-meta">
+        <span>{program.department || "Unassigned Department"}</span>
         <span>{program.type}</span>
         <span>{program.duration}</span>
         <span>{program.totalUnits} units</span>

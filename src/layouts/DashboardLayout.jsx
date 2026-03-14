@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
@@ -10,7 +10,7 @@ const pageTitles = {
   "/dashboard/enrollment": "Enrollment",
   "/dashboard/reports": "Reports",
   "/dashboard/settings": "Settings",
-  "/dashboard/programs": "Program Offerings",
+  "/dashboard/programs": "Course Offerings",
   "/dashboard/subjects": "Subject Offerings",
 };
 
@@ -18,6 +18,11 @@ function DashboardLayout() {
   const location = useLocation();
   const title = pageTitles[location.pathname];
   const isDashboardHome = location.pathname === "/dashboard";
+
+  useEffect(() => {
+    const savedMode = localStorage.getItem("dashboard_theme_mode") || "light";
+    document.documentElement.setAttribute("data-theme", savedMode);
+  }, []);
 
   return (
     <div className="dashboard">

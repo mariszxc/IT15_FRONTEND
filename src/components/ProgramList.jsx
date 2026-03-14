@@ -6,7 +6,7 @@ function ProgramList({ programs, selectedCode, onSelect }) {
     <section className="table-card">
       <div className="table-header">
         <div>
-          <p className="chart-title">Program Lists</p>
+          <p className="chart-title">Course Lists</p>
         </div>
       </div>
 
@@ -22,7 +22,7 @@ function ProgramList({ programs, selectedCode, onSelect }) {
       </div>
 
       {programs.length === 0 ? (
-        <p className="empty-state">No programs match the selected filters.</p>
+        <p className="empty-state">No courses match the selected filters.</p>
       ) : null}
     </section>
   );

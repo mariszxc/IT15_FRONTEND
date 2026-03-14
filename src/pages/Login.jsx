@@ -5,8 +5,8 @@ import eduManzanoLogo from "../assets/Edu manzanoPORTAL.png";
 import { useAuth } from "../context/AuthContext";
 
 function Login() {
-  const [showLogin, setShowLogin] = useState(true);
-  const [showPassword, setShowPassword] = useState(true);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("Login failed. Please try again.");

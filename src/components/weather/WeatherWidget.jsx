@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import LoadingSpinner from "../common/LoadingSpinner";
 import ForecastDisplay from "./ForecastDisplay";
-import { fetchCurrentWeather, fetchForecast } from "../../services/weatherApi";
+import { fetchWeatherBundle } from "../../services/weatherApi";
 
 const sanitizeCity = (city) => city.replace(/[^a-zA-Z\s-]/g, "").trim();
 const MotionArticle = motion.article;
@@ -23,13 +23,10 @@ function WeatherWidget() {
     setError("");
 
     try {
-      const [currentResponse, forecastResponse] = await Promise.all([
-        fetchCurrentWeather(params),
-        fetchForecast(params),
-      ]);
+      const response = await fetchWeatherBundle(params);
 
-      setCurrent(currentResponse.data);
-      setForecast(forecastResponse.data);
+      setCurrent(response.data.current);
+      setForecast(response.data.forecast);
     } catch (err) {
       const status = err.response?.status;
 
@@ -38,7 +35,11 @@ function WeatherWidget() {
       } else if (status === 503) {
         setError(err.response?.data?.message || "Weather service is unavailable.");
       } else {
-        setError(err.response?.data?.message || "Unable to fetch weather data.");
+        setError(
+          err.response?.data?.message ||
+            err.message ||
+            "Unable to fetch weather data. Please check backend connection and try again."
+        );
       }
     } finally {
       setLoading(false);
@@ -115,12 +116,12 @@ function WeatherWidget() {
       )}
 
       {!loading && !error && current && (
-        <div className="weather-current weather-current-animated">
+        <div className="weather-current weather-current-animated weather-current-live">
           <div className="weather-current-head">
             <img
               src={`https://openweathermap.org/img/wn/${current.weather?.[0]?.icon}@2x.png`}
               alt={current.weather?.[0]?.description || "Weather icon"}
-              className="weather-icon-large"
+              className="weather-icon-large weather-icon-live"
             />
             <div>
               <strong>{current.name}</strong>

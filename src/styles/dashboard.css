@@ -10,6 +10,13 @@
   --text-muted: #6a6880;
 }
 
+:root[data-theme="dark"] {
+  --surface: #161825;
+  --surface-strong: #1f2234;
+  --text-primary: #f3f4ff;
+  --text-muted: #c5c9e8;
+}
+
 .dashboard {
   min-height: 100vh;
   display: grid;
@@ -254,9 +261,16 @@
   transition: background 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
 }
 
+button:hover:not(:disabled),
+.btn:hover:not(:disabled) {
+  background: #c6bcff !important;
+  border-color: #c6bcff !important;
+  color: #ffffff !important;
+}
+
 .ghost-btn {
-  background: #ffffff;
-  color: var(--purple-700);
+  background: var(--purple-900);
+  color: #ffffff;
   border: 1px solid rgba(45, 42, 99, 0.15);
 }
 
@@ -274,6 +288,18 @@
   white-space: nowrap;
   padding-right: 10px;
   border-right: 1px solid rgba(45, 42, 99, 0.12);
+}
+
+.topbar-date-btn {
+  border: none;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.topbar-date-btn:hover {
+  transform: translateY(-1px);
 }
 
 .topbar-status-content {
@@ -325,6 +351,38 @@
   padding: 0;
   cursor: pointer;
   font: inherit;
+}
+
+.topbar-weather-live:hover {
+  transform: translateY(-1px);
+}
+
+.weather-live-icon {
+  animation: weatherIconFloat 2.8s ease-in-out infinite;
+}
+
+.weather-live-value {
+  animation: weatherTempPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes weatherIconFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes weatherTempPulse {
+  0%,
+  100% {
+    opacity: 0.88;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .topbar-weather-location {
@@ -389,10 +447,23 @@
   width: min(860px, 100%);
 }
 
-.weather-modal-body .table-card {
-  box-shadow: none;
+.weather-modal-card {
+  width: min(860px, 100%);
   padding: 0;
   background: transparent;
+  box-shadow: none;
+}
+
+.weather-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.weather-modal-body .table-card {
+  box-shadow: 0 22px 38px rgba(45, 42, 99, 0.16);
+  padding: 20px 22px 14px;
+  background: linear-gradient(180deg, #f8f7ff 0%, #f2f0fc 100%);
 }
 
 .topbar-chatbot-header {
@@ -480,7 +551,7 @@
 .primary-btn {
   background: var(--purple-900);
   color: #ffffff;
-  box-shadow: 0 16px 28px rgba(45, 42, 99, 0.2);
+  box-shadow: 0 16px 28px #2d2a6333;
 }
 
 .logout-btn {
@@ -946,12 +1017,18 @@
 }
 
 .filter-field input,
-.filter-field select {
+.filter-field select,
+.filter-field textarea {
   border-radius: 10px;
   border: 1px solid rgba(45, 42, 99, 0.16);
   padding: 10px 12px;
   background: #ffffff;
   color: var(--text-primary);
+}
+
+.filter-field textarea {
+  resize: vertical;
+  min-height: 84px;
 }
 
 .program-grid {
@@ -1149,6 +1226,308 @@
   margin-top: 14px;
 }
 
+.course-details-modal {
+  width: min(980px, 100%);
+  border: 1px solid rgba(45, 42, 99, 0.1);
+}
+
+.course-details-content {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.course-details-content .details-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.course-details-content .info-item {
+  background: #f2f1fa;
+}
+
+.academic-calendar-modal {
+  width: min(980px, 100%);
+  border: 1px solid rgba(45, 42, 99, 0.12);
+  background: linear-gradient(180deg, #fcfbff 0%, #ffffff 100%);
+}
+
+.calendar-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.calendar-modal-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--purple-900);
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.calendar-modal-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.calendar-status-text {
+  font-size: 14px;
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+
+.calendar-status-error {
+  border: 1px solid rgba(177, 39, 58, 0.25);
+  background: rgba(177, 39, 58, 0.06);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.calendar-status-error p {
+  margin: 0;
+  color: #8e1f32;
+  font-size: 13px;
+}
+
+.calendar-month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.calendar-month-nav strong {
+  color: var(--purple-900);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.academic-calendar-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 10px 0 14px;
+}
+
+.calendar-summary-card {
+  border: 1px solid rgba(45, 42, 99, 0.12);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, #f7f5ff, #ffffff);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.calendar-summary-card span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.calendar-summary-card strong {
+  font-size: 20px;
+  color: var(--purple-900);
+}
+
+.academic-calendar-monthly-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 12px;
+}
+
+.academic-calendar-grid-wrap {
+  border: 1px solid rgba(45, 42, 99, 0.12);
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.academic-calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.academic-calendar-weekdays span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--purple-700);
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.academic-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.calendar-day-cell {
+  min-height: 96px;
+  border-radius: 10px;
+  border: 1px solid rgba(45, 42, 99, 0.1);
+  background: #fbfaff;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.calendar-day-cell.blank {
+  border: 1px dashed rgba(45, 42, 99, 0.08);
+  background: rgba(245, 244, 252, 0.5);
+}
+
+.calendar-day-cell.holiday {
+  background: rgba(245, 196, 90, 0.12);
+}
+
+.calendar-day-cell.school-day {
+  background: rgba(77, 204, 124, 0.08);
+}
+
+.calendar-day-cell.other {
+  background: rgba(106, 75, 196, 0.08);
+}
+
+.calendar-day-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.calendar-day-top strong {
+  font-size: 13px;
+  color: var(--purple-900);
+}
+
+.calendar-day-attendance {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.calendar-day-event {
+  font-size: 11px;
+  line-height: 1.25;
+  color: var(--purple-900);
+  margin: 0;
+}
+
+.academic-calendar-events-panel {
+  border: 1px solid rgba(45, 42, 99, 0.12);
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.academic-calendar-events-panel h4 {
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--purple-900);
+}
+
+.academic-calendar-events-panel ul {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.academic-calendar-events-panel li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  border-radius: 9px;
+  background: #f8f7ff;
+}
+
+.academic-calendar-events-panel li strong {
+  font-size: 12px;
+  color: var(--purple-700);
+}
+
+.academic-calendar-events-panel li span {
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.academic-calendar-table-wrap {
+  max-height: 56vh;
+  overflow: auto;
+  border: 1px solid rgba(45, 42, 99, 0.12);
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+.academic-calendar-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+}
+
+.academic-calendar-table th,
+.academic-calendar-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(45, 42, 99, 0.08);
+  text-align: left;
+  font-size: 13px;
+  vertical-align: top;
+}
+
+.academic-calendar-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, #f3f1ff, #ece8ff);
+  color: var(--purple-900);
+  font-weight: 700;
+}
+
+.academic-calendar-table tbody tr:hover {
+  background: rgba(106, 75, 196, 0.04);
+}
+
+@media (max-width: 980px) {
+  .academic-calendar-monthly-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.calendar-type-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.calendar-type-badge.school-day {
+  background: rgba(77, 204, 124, 0.2);
+  color: #1c7f4d;
+}
+
+.calendar-type-badge.holiday {
+  background: rgba(245, 196, 90, 0.2);
+  color: #996404;
+}
+
+.calendar-type-badge.other {
+  background: rgba(106, 75, 196, 0.2);
+  color: var(--purple-700);
+}
+
 .info-card {
   background: var(--surface-strong);
   padding: 24px;
@@ -1302,6 +1681,125 @@
   border-top: 1px solid rgba(45, 42, 99, 0.12);
 }
 
+.settings-theme-shell {
+  align-items: stretch;
+}
+
+.settings-theme-panel {
+  background: var(--surface-strong);
+  color: var(--text-primary);
+  border-radius: 18px;
+  border: 1px solid rgba(45, 42, 99, 0.16);
+  box-shadow: 0 18px 30px rgba(45, 42, 99, 0.1);
+  padding: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.theme-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.theme-toggle-slider {
+  width: 52px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgba(45, 42, 99, 0.26);
+  position: relative;
+  transition: background 0.2s ease;
+}
+
+.theme-toggle-slider::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: transform 0.2s ease;
+}
+
+.theme-toggle input:checked + .theme-toggle-slider {
+  background: var(--purple-600);
+}
+
+.theme-toggle input:checked + .theme-toggle-slider::before {
+  transform: translateX(22px);
+}
+
+.theme-toggle-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+:root[data-theme="dark"] body {
+  background: #121421;
+}
+
+:root[data-theme="dark"] .topbar-actions,
+:root[data-theme="dark"] .topbar-chatbot-btn,
+:root[data-theme="dark"] .program-card,
+:root[data-theme="dark"] .subject-card,
+:root[data-theme="dark"] .modal-card,
+:root[data-theme="dark"] .info-card,
+:root[data-theme="dark"] .table-card,
+:root[data-theme="dark"] .pipeline-card,
+:root[data-theme="dark"] .info-item,
+:root[data-theme="dark"] .settings-theme-panel {
+  background: #1f2234;
+  color: var(--text-primary);
+  border-color: rgba(197, 201, 232, 0.2);
+}
+
+:root[data-theme="dark"] .filter-field input,
+:root[data-theme="dark"] .filter-field select,
+:root[data-theme="dark"] .filter-field textarea,
+:root[data-theme="dark"] .weather-search input {
+  background: #15182a;
+  color: var(--text-primary);
+  border-color: rgba(197, 201, 232, 0.25);
+}
+
+:root[data-theme="dark"] .chart-title,
+:root[data-theme="dark"] .program-name,
+:root[data-theme="dark"] strong,
+:root[data-theme="dark"] h1,
+:root[data-theme="dark"] h2,
+:root[data-theme="dark"] h3,
+:root[data-theme="dark"] p,
+:root[data-theme="dark"] span,
+:root[data-theme="dark"] label {
+  color: inherit;
+}
+
+:root[data-theme="dark"] .topbar-date-label,
+:root[data-theme="dark"] .topbar-weather-location,
+:root[data-theme="dark"] .table-secondary,
+:root[data-theme="dark"] .student-meta,
+:root[data-theme="dark"] .chart-subtitle,
+:root[data-theme="dark"] .program-meta span {
+  color: var(--text-muted);
+}
+
+:root[data-theme="dark"] .topbar-date-value,
+:root[data-theme="dark"] .topbar-weather-value {
+  color: var(--text-primary);
+}
+
 .dashboard-feedback {
   font-size: 13px;
   padding: 10px 14px;
@@ -1325,11 +1823,17 @@
 .weather-search input {
   flex: 1;
   min-width: 180px;
-  border-radius: 10px;
-  border: 1px solid rgba(45, 42, 99, 0.16);
+  border-radius: 12px;
+  border: 1px solid rgba(106, 75, 196, 0.24);
   padding: 9px 12px;
   background: #ffffff;
   color: var(--text-primary);
+}
+
+.weather-search input:focus {
+  outline: none;
+  border-color: rgba(106, 75, 196, 0.45);
+  box-shadow: 0 0 0 3px rgba(106, 75, 196, 0.12);
 }
 
 .weather-note {
@@ -1343,17 +1847,56 @@
 }
 
 .weather-current {
-  background: var(--surface);
+  background: linear-gradient(135deg, #dbd2ff, #ffffffc7);
+  border: 0px solid #dbd2ff;
   border-radius: 12px;
-  padding: 10px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin-bottom: 10px;
 }
 
+.weather-current-head strong {
+  color: var(--purple-900);
+  font-size: 34px;
+}
+
+.weather-current-live {
+  position: relative;
+  overflow: hidden;
+}
+
+.weather-current-live::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.32) 45%, transparent 70%);
+  transform: translateX(-120%);
+  animation: weatherShimmer 3.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
 .weather-current-animated {
   animation: weatherReveal 260ms ease-out;
+}
+
+@keyframes weatherShimmer {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  55% {
+    transform: translateX(120%);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
 }
 
 @keyframes weatherReveal {
@@ -1378,6 +1921,24 @@
   height: 48px;
 }
 
+.weather-icon-live {
+  animation: weatherIconBob 2.6s ease-in-out infinite;
+}
+
+.weather-icon-live-small {
+  animation: weatherIconBob 3.2s ease-in-out infinite;
+}
+
+@keyframes weatherIconBob {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-2px) rotate(-2deg);
+  }
+}
+
 .weather-meta-text {
   display: block;
   font-size: 12px;
@@ -1392,6 +1953,15 @@
   font-size: 12px;
 }
 
+.weather-kpis span {
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(106, 75, 196, 0.14);
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: var(--purple-900);
+  font-weight: 600;
+}
+
 .forecast-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
@@ -1399,7 +1969,8 @@
 }
 
 .forecast-card {
-  background: var(--surface);
+  background: #dbd2ff;
+  border: 1px solid #dbd2ff;
   border-radius: 10px;
   padding: 8px;
   display: flex;
@@ -1408,6 +1979,23 @@
   gap: 4px;
   font-size: 12px;
   text-align: center;
+  animation: forecastBreath 4.6s ease-in-out infinite;
+}
+
+.forecast-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.forecast-card:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.forecast-card:nth-child(4) {
+  animation-delay: 0.6s;
+}
+
+.forecast-card:nth-child(5) {
+  animation-delay: 0.8s;
 }
 
 .forecast-card-animated {
@@ -1426,9 +2014,34 @@
   }
 }
 
+@keyframes forecastBreath {
+  0%,
+  100% {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+  50% {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(45, 42, 99, 0.08);
+  }
+}
+
 .forecast-card img {
   width: 34px;
   height: 34px;
+}
+
+.forecast-card .small.fw-semibold {
+  color: var(--purple-700);
+}
+
+.forecast-card .small {
+  color: var(--purple-900);
+}
+
+.weather-modal-body .chart-title {
+  color: var(--purple-900);
+  font-weight: 800;
 }
 
 @media (max-width: 980px) {
@@ -1439,23 +2052,53 @@
   .sidebar {
     position: static;
     height: auto;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 16px 18px;
+  }
+
+  .sidebar-topbar {
+    width: 100%;
+  }
+
+  .sidebar-menu-toggle {
+    display: inline-flex;
   }
 
   .sidebar-nav {
-    flex-direction: row;
-    flex-wrap: wrap;
+    display: none;
+    width: 100%;
+    flex-direction: column;
     gap: 8px;
   }
 
+  .sidebar-nav.open {
+    display: flex;
+  }
+
   .sidebar-link {
-    padding: 8px 12px;
+    width: 100%;
+    padding: 9px 12px;
+  }
+
+  .sidebar-footer {
+    display: none;
+  }
+
+  .sidebar-mobile-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 12px;
+    opacity: 0.75;
   }
 
   .dashboard-content {
-    padding: 24px 20px 32px;
+    padding: 20px 16px 28px;
   }
 
   .topbar {
@@ -1484,91 +2127,81 @@
 
 @media (max-width: 640px) {
   .sidebar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
+    padding: 14px 14px;
   }
 
-  .sidebar-topbar {
-    width: 100%;
-  }
-
-  .sidebar-menu-toggle {
-    display: inline-flex;
-  }
-
-  .sidebar-nav {
-    display: none;
-    width: 100%;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .sidebar-nav.open {
-    display: flex;
-  }
-
-  .sidebar-link {
-    width: 100%;
+  .sidebar-menu-toggle,
+  .topbar-chatbot-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
   }
 
   .sidebar-logout-action {
     margin-top: 2px;
   }
 
-  .sidebar-mobile-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-    font-size: 12px;
-    opacity: 0.75;
-  }
-
-  .sidebar-footer {
-    display: none;
-  }
-
   .topbar-actions {
     width: 100%;
-    flex-direction: column;
-    align-items: stretch;
-    padding: 10px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    gap: 8px;
   }
 
   .topbar-utilities {
     width: 100%;
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
   }
 
   .topbar-chatbot {
-    width: 100%;
-    justify-content: flex-end;
+    width: auto;
+    justify-content: center;
+    position: relative;
+    top: auto;
+    right: auto;
+    margin-left: auto;
+    z-index: 6;
   }
 
   .topbar-chatbot-panel {
-    position: static;
-    width: 100%;
-    margin-top: 8px;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: min(320px, calc(100vw - 24px));
+    margin-top: 0;
   }
 
   .topbar-weather {
-    width: 100%;
-    align-items: flex-start;
+    width: auto;
+    min-width: 0;
+    flex: 1;
+    align-items: center;
+    justify-content: flex-start;
     text-align: left;
+    padding-left: 8px;
   }
 
   .topbar-date {
-    width: 100%;
-    align-items: flex-start;
+    width: auto;
+    min-width: 0;
+    flex: 1;
+    align-items: center;
+    justify-content: flex-start;
     text-align: left;
-    border-right: none;
-    border-bottom: 1px solid rgba(33, 30, 85, 0.12);
-    padding-bottom: 10px;
-    margin-bottom: 2px;
+    border-right: 1px solid rgba(33, 30, 85, 0.12);
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    padding-right: 8px;
+  }
+
+  .topbar-status-content {
+    justify-content: center;
   }
 
   .ghost-btn,

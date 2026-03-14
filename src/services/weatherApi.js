@@ -1,4 +1,5 @@
 import api from "./api";
+import axios from "axios";
 
 const iconMap = {
 	sun: "01d",
@@ -19,6 +20,37 @@ const normalizeParams = (params = {}) => {
 		...(lat != null ? { latitude: lat } : {}),
 		...(lon != null ? { longitude: lon } : {}),
 	};
+};
+
+const backendApiBase = (() => {
+	const backend = import.meta.env.VITE_BACKEND_URL?.replace(/\/+$/, "");
+	if (backend) {
+		return `${backend}/api`;
+	}
+
+	return "http://127.0.0.1:8000/api";
+})();
+
+const requestForecastPayload = async (params) => {
+	const normalized = normalizeParams(params);
+
+	try {
+		return await api.get("/weather/forecast", { params: normalized });
+	} catch (error) {
+		const shouldRetryDirect = !error.response || error.code === "ERR_NETWORK" || error.response?.status === 404;
+
+		if (!shouldRetryDirect) {
+			throw error;
+		}
+
+		return axios.get(`${backendApiBase}/weather/forecast`, {
+			params: normalized,
+			timeout: 15000,
+			headers: {
+				Accept: "application/json",
+			},
+		});
+	}
 };
 
 const normalizeCurrent = (payload = {}) => {
@@ -66,6 +98,18 @@ export const fetchCurrentWeather = async (params) => {
 };
 
 export const fetchForecast = async (params) => {
-	const response = await api.get("/weather/forecast", { params: normalizeParams(params) });
+	const response = await requestForecastPayload(params);
 	return { ...response, data: normalizeForecast(response.data) };
+};
+
+export const fetchWeatherBundle = async (params) => {
+	const response = await requestForecastPayload(params);
+
+	return {
+		...response,
+		data: {
+			current: normalizeCurrent(response.data),
+			forecast: normalizeForecast(response.data),
+		},
+	};
 };

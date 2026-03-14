@@ -38,7 +38,7 @@ function ForecastDisplay({ data }) {
         >
           <div className="small fw-semibold">{item.dt_txt.split(" ")[0]}</div>
           <img
-            className="weather-icon"
+            className="weather-icon weather-icon-live-small"
             src={`https://openweathermap.org/img/wn/${item.weather?.[0]?.icon}@2x.png`}
             alt={item.weather?.[0]?.description || "Weather icon"}
           />

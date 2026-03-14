@@ -5,38 +5,55 @@ import { TopbarUtilities } from "./Topbar";
 import EnrollmentChart from "./dashboard/EnrollmentChart";
 import CourseDistributionChart from "./dashboard/CourseDistributionChart";
 import AttendanceChart from "./dashboard/AttendanceChart";
-import WeatherWidget from "./weather/WeatherWidget";
+import LoadingSpinner from "./common/LoadingSpinner";
 
-const FALLBACK_METRICS = {
+const EMPTY_METRICS = {
   totals: {
-    students: 248,
-    courses: 6,
-    enrollments: 312,
+    students: 0,
+    courses: 0,
+    enrollments: 0,
   },
-  enrollmentTrends: [
-    { month: "2025-09", total: 36 },
-    { month: "2025-10", total: 44 },
-    { month: "2025-11", total: 51 },
-    { month: "2025-12", total: 39 },
-    { month: "2026-01", total: 66 },
-    { month: "2026-02", total: 76 },
-  ],
-  courseDistribution: [
-    { name: "Computer Science", total: 72 },
-    { name: "Information Technology", total: 96 },
-    { name: "Nursing", total: 57 },
-    { name: "Engineering", total: 52 },
-    { name: "Education", total: 42 },
-    { name: "Tourism", total: 18 },
-  ],
-  attendancePatterns: [
-    { school_day: "Mon", rate: 90 },
-    { school_day: "Tue", rate: 60 },
-    { school_day: "Wed", rate: 99 },
-    { school_day: "Thu", rate: 60 },
-    { school_day: "Fri", rate: 50 },
-  ],
+  enrollmentTrends: [],
+  courseDistribution: [],
+  attendancePatterns: [],
 };
+
+function normalizeDashboardMetrics(payload) {
+  if (!payload || typeof payload !== "object") {
+    return EMPTY_METRICS;
+  }
+
+  const summary = payload.summary || {};
+  const monthlyEnrollment = payload.monthly_enrollment || payload.enrollmentTrends || [];
+  const courseDistributionRaw = payload.course_distribution || payload.courseDistribution || [];
+  const attendancePatternsRaw = payload.attendance_patterns || payload.attendancePatterns || [];
+
+  const courseDistribution = courseDistributionRaw.map((item) => ({
+    name: item.name,
+    total: Number(item.total_students ?? item.total ?? 0),
+  }));
+
+  const enrollments = courseDistribution.reduce((sum, item) => sum + Number(item.total || 0), 0);
+
+  const attendancePatterns = attendancePatternsRaw.map((item) => ({
+    school_day: item.school_day || item.month || "",
+    rate: Number(item.rate ?? item.average_attendance_rate ?? 0),
+  }));
+
+  return {
+    totals: {
+      students: Number(summary.students ?? payload.totals?.students ?? 0),
+      courses: Number(summary.courses ?? payload.totals?.courses ?? courseDistribution.length ?? 0),
+      enrollments: Number(enrollments || payload.totals?.enrollments || 0),
+    },
+    enrollmentTrends: monthlyEnrollment.map((item) => ({
+      month: item.month,
+      total: Number(item.total ?? 0),
+    })),
+    courseDistribution,
+    attendancePatterns,
+  };
+}
 
 function Dashboard() {
   const [metrics, setMetrics] = useState(null);
@@ -44,42 +61,56 @@ function Dashboard() {
   const [metricsError, setMetricsError] = useState("");
 
   useEffect(() => {
+    let isActive = true;
+
     async function loadDashboardMetrics() {
       setMetricsStatus("loading");
       setMetricsError("");
 
       try {
         const response = await dashboardMetricsRequest();
-        setMetrics(response.data);
+        if (!isActive) {
+          return;
+        }
+
+        setMetrics(normalizeDashboardMetrics(response.data));
         setMetricsStatus("done");
       } catch (error) {
-        setMetrics(FALLBACK_METRICS);
-        setMetricsStatus("fallback");
+        if (!isActive) {
+          return;
+        }
+
+        setMetrics(EMPTY_METRICS);
+        setMetricsStatus("error");
         setMetricsError(error.response?.data?.message || "Unable to load dashboard metrics.");
       }
     }
 
     loadDashboardMetrics();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
-  const activeMetrics = metrics || FALLBACK_METRICS;
+  const activeMetrics = metrics || EMPTY_METRICS;
 
   const overviewCards = [
     {
       title: "Total Students",
-      value: activeMetrics.totals?.students ?? "-",
+      value: metricsStatus === "loading" ? "-" : activeMetrics.totals?.students ?? "-",
     },
     {
       title: "Total Courses",
-      value: activeMetrics.totals?.courses ?? "-",
+      value: metricsStatus === "loading" ? "-" : activeMetrics.totals?.courses ?? "-",
     },
     {
       title: "Total Enrollments",
-      value: activeMetrics.totals?.enrollments ?? "-",
+      value: metricsStatus === "loading" ? "-" : activeMetrics.totals?.enrollments ?? "-",
     },
     {
       title: "Attendance Data Points",
-      value: activeMetrics.attendancePatterns?.length ?? "-",
+      value: metricsStatus === "loading" ? "-" : activeMetrics.attendancePatterns?.length ?? "-",
     },
   ];
 
@@ -137,39 +168,36 @@ function Dashboard() {
         ))}
       </section>
 
-      <section className="chart-grid">
-        <EnrollmentChart data={offeringsData} />
-        <CourseDistributionChart data={statusData} />
-        <AttendanceChart data={attendanceData} />
-      </section>
-
-      {metricsStatus === "loading" && <div className="dashboard-feedback">Loading dashboard data...</div>}
-      {metricsStatus === "error" && <div className="dashboard-feedback error">{metricsError}</div>}
-      {metricsStatus === "fallback" && (
-        <div className="dashboard-feedback">
-          Live dashboard data is currently unavailable ({metricsError}). Showing demo chart data for now.
-        </div>
+      {metricsStatus !== "loading" && (
+        <section className="chart-grid">
+          <EnrollmentChart data={offeringsData} />
+          <CourseDistributionChart data={statusData} />
+          <AttendanceChart data={attendanceData} />
+        </section>
       )}
 
-      <section className="list-two-col">
-        <WeatherWidget />
+      {metricsStatus === "loading" && <LoadingSpinner skeleton />}
+      {metricsStatus === "error" && <div className="dashboard-feedback error">{metricsError}</div>}
 
-        <article className="table-card">
-          <div className="table-header">
-            <div>
-              <p className="chart-title">Course Enrollment Summary</p>
+      {metricsStatus !== "loading" && (
+        <section className="list-two-col">
+          <article className="table-card">
+            <div className="table-header">
+              <div>
+                <p className="chart-title">Course Enrollment Summary</p>
+              </div>
             </div>
-          </div>
-          <ul className="recent-list">
-            {statusData.map((course) => (
-              <li key={course.name}>
-                <strong>{course.name}</strong>
-                <span>{course.total} students enrolled</span>
-              </li>
-            ))}
-          </ul>
-        </article>
-      </section>
+            <ul className="recent-list">
+              {statusData.map((course) => (
+                <li key={course.name}>
+                  <strong>{course.name}</strong>
+                  <span>{course.total} students enrolled</span>
+                </li>
+              ))}
+            </ul>
+          </article>
+        </section>
+      )}
     </div>
   );
 }

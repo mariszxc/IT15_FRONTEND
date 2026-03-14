@@ -2,6 +2,7 @@ import React from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import Login from "./pages/Login";
 import DashboardLayout from "./layouts/DashboardLayout";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 import DashboardHome from "./pages/DashboardHome";
 import ProgramOfferings from "./pages/ProgramOfferings";
 import SubjectOfferings from "./pages/SubjectOfferings";
@@ -15,10 +16,18 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Login />} />
-      <Route path="/dashboard" element={<DashboardLayout />}>
+      <Route
+        path="/dashboard"
+        element={(
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        )}
+      >
         <Route index element={<DashboardHome />} />
         <Route path="programs" element={<ProgramOfferings />} />
         <Route path="subjects" element={<SubjectOfferings />} />
+        <Route path="courses" element={<Navigate to="/dashboard/subjects" replace />} />
         <Route path="students" element={<Students />} />
         <Route path="enrollment" element={<Enrollment />} />
         <Route path="reports" element={<Reports />} />

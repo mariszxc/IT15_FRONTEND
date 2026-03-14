@@ -1,30 +1,25 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { downloadCsv } from "../utils/exportCsv";
-
-const reportQueue = [
-  {
-    title: "Enrollment Forecast",
-    owner: "Planning Office",
-    status: "Approved",
-    updated: "Feb 18, 2026",
-  },
-  {
-    title: "Slot Utilization",
-    owner: "Registrar",
-    status: "Pending",
-    updated: "Feb 17, 2026",
-  },
-  {
-    title: "Payment Compliance",
-    owner: "Finance",
-    status: "For Review",
-    updated: "Feb 16, 2026",
-  },
-];
+import { getUserActivities } from "../utils/activityLog";
 
 function Reports() {
+  const activityRows = useMemo(() => {
+    return getUserActivities().map((entry) => ({
+      time: new Date(entry.timestamp).toLocaleString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      action: entry.action,
+      entity: entry.entity,
+      details: entry.description,
+    }));
+  }, []);
+
   const handleExportReports = () => {
-    downloadCsv("reports-center.csv", reportQueue);
+    downloadCsv("user-activity-reports.csv", activityRows);
   };
 
   return (
@@ -42,26 +37,27 @@ function Reports() {
           <table>
             <thead>
               <tr>
-                <th>Report</th>
-                <th>Owner</th>
-                <th>Status</th>
-                <th>Updated</th>
+                <th>Time</th>
+                <th>Action</th>
+                <th>Entity</th>
+                <th>Details</th>
               </tr>
             </thead>
             <tbody>
-              {reportQueue.map((report) => {
-                const statusClass = report.status.toLowerCase().replace(/\s+/g, "-");
-                return (
-                  <tr key={report.title}>
-                    <td>{report.title}</td>
-                    <td>{report.owner}</td>
-                    <td>
-                      <span className={`status-pill ${statusClass}`}>{report.status}</span>
-                    </td>
-                    <td>{report.updated}</td>
+              {activityRows.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="empty-state">No user activity recorded yet.</td>
+                </tr>
+              ) : (
+                activityRows.map((row, index) => (
+                  <tr key={`${row.time}-${index}`}>
+                    <td>{row.time}</td>
+                    <td>{row.action}</td>
+                    <td>{row.entity}</td>
+                    <td>{row.details}</td>
                   </tr>
-                );
-              })}
+                ))
+              )}
             </tbody>
           </table>
         </div>

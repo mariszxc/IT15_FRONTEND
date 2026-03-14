@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import eduManzanoLogo from "../assets/EDUMANZANOSYSTEM.png";
+import { useAuth } from "../context/AuthContext";
 
 const navItems = [
   { label: "Dashboard", path: "/dashboard", icon: "dashboard" },
-  { label: "Programs", path: "/dashboard/programs", icon: "programs" },
+  { label: "Course", path: "/dashboard/programs", icon: "programs" },
   { label: "Subjects", path: "/dashboard/subjects", icon: "subjects" },
   { label: "Students", path: "/dashboard/students", icon: "students" },
   { label: "Enrollment", path: "/dashboard/enrollment", icon: "enrollment" },
@@ -102,12 +103,14 @@ function SidebarIcon({ icon }) {
 
 function Sidebar() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     const confirmed = window.confirm("Are you sure you want to log out?");
     if (confirmed) {
-      navigate("/");
+      await logout();
+      navigate("/", { replace: true });
     }
     setIsMenuOpen(false);
   };
