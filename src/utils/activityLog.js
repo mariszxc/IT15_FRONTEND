@@ -1,3 +1,5 @@
+import { activityLogsRequest, storeActivityRequest } from "../services/api";
+
 const ACTIVITY_STORAGE_KEY = "user_activity_logs";
 
 const readRawLogs = () => {
@@ -51,22 +53,56 @@ export const logUserActivity = ({ action, entity, description, metadata = {} }) 
   const next = [entry, ...logs].slice(0, 500);
   writeRawLogs(next);
 
+  storeActivityRequest({
+    action,
+    entity,
+    description,
+    metadata,
+    timestamp: entry.timestamp,
+  }).catch(() => {
+    // Keep local fallback only when API is unavailable.
+  });
+
   return entry;
 };
 
-export const getUserActivities = () => {
+const normalizeActivitiesPayload = (payload) => {
+  if (Array.isArray(payload?.data)) {
+    return payload.data;
+  }
+
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  return [];
+};
+
+export const getUserActivities = async () => {
   const actor = getCurrentActor();
-  const logs = readRawLogs();
 
-  return logs.filter((entry) => {
-    if (!entry?.actor) {
-      return false;
+  try {
+    const response = await activityLogsRequest({ per_page: 500 });
+    const logs = normalizeActivitiesPayload(response?.data);
+
+    if (logs.length > 0) {
+      writeRawLogs(logs);
     }
 
-    if (actor.id != null && entry.actor.id != null) {
-      return entry.actor.id === actor.id;
-    }
+    return logs;
+  } catch {
+    const logs = readRawLogs();
 
-    return entry.actor.email === actor.email;
-  });
+    return logs.filter((entry) => {
+      if (!entry?.actor) {
+        return false;
+      }
+
+      if (actor.id != null && entry.actor.id != null) {
+        return entry.actor.id === actor.id;
+      }
+
+      return entry.actor.email === actor.email;
+    });
+  }
 };

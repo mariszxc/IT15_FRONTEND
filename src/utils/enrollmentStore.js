@@ -1,3 +1,5 @@
+import { enrollmentRecordsRequest, enrollStudentRequest } from "../services/api";
+
 const ENROLLMENT_STORAGE_KEY = "student_enrollment_records";
 
 const readEnrollmentRecords = () => {
@@ -20,16 +22,52 @@ const getCurrentBatch = (date = new Date()) =>
 
 const normalizeText = (value) => String(value || "").trim().toLowerCase();
 
-export const getEnrollmentRecords = () => readEnrollmentRecords();
+const normalizeRecordsPayload = (payload) => {
+  if (Array.isArray(payload?.data)) {
+    return payload.data;
+  }
 
-export const getEnrollmentRecordForStudent = (student) => {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  return [];
+};
+
+export const getEnrollmentRecords = async () => {
+  try {
+    const response = await enrollmentRecordsRequest({ per_page: 500 });
+    const records = normalizeRecordsPayload(response?.data);
+    writeEnrollmentRecords(records);
+    return records;
+  } catch {
+    return readEnrollmentRecords();
+  }
+};
+
+export const getEnrollmentRecordForStudent = async (student) => {
   if (!student) {
     return null;
   }
 
-  const records = readEnrollmentRecords();
   const targetId = String(student.id ?? "");
   const targetNumber = normalizeText(student.student_number);
+
+  try {
+    const response = await enrollmentRecordsRequest({
+      per_page: 1,
+      ...(targetId ? { student_id: targetId } : {}),
+      ...(targetNumber ? { student_number: student.student_number } : {}),
+    });
+    const records = normalizeRecordsPayload(response?.data);
+    if (records.length > 0) {
+      return records[0];
+    }
+  } catch {
+    // Falls back to local cache below.
+  }
+
+  const records = readEnrollmentRecords();
 
   return (
     records.find((record) => {
@@ -46,7 +84,7 @@ export const getEnrollmentRecordForStudent = (student) => {
   );
 };
 
-export const enrollStudentRecord = (student) => {
+export const enrollStudentRecord = async (student) => {
   const records = readEnrollmentRecords();
   const now = new Date();
   const studentId = String(student.id ?? "");
@@ -64,6 +102,29 @@ export const enrollStudentRecord = (student) => {
     approved: true,
     enrollmentStatus: "Enrolled",
   };
+
+  try {
+    const response = await enrollStudentRequest(nextRecord);
+    const persisted = response?.data?.data || response?.data || nextRecord;
+    const existingIndex = records.findIndex((record) => {
+      const sameId = studentId && String(record.studentId ?? "") === studentId;
+      const sameNumber =
+        studentNumber && normalizeText(record.studentNumber) === normalizeText(studentNumber);
+
+      return sameId || sameNumber;
+    });
+
+    if (existingIndex >= 0) {
+      records[existingIndex] = persisted;
+    } else {
+      records.unshift(persisted);
+    }
+
+    writeEnrollmentRecords(records);
+    return persisted;
+  } catch {
+    // Falls back to local persistence below.
+  }
 
   const existingIndex = records.findIndex((record) => {
     const sameId = studentId && String(record.studentId ?? "") === studentId;

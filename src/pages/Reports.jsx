@@ -1,21 +1,41 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { downloadCsv } from "../utils/exportCsv";
 import { getUserActivities } from "../utils/activityLog";
 
 function Reports() {
-  const activityRows = useMemo(() => {
-    return getUserActivities().map((entry) => ({
-      time: new Date(entry.timestamp).toLocaleString("en-US", {
-        month: "short",
-        day: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      action: entry.action,
-      entity: entry.entity,
-      details: entry.description,
-    }));
+  const [activityRows, setActivityRows] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadActivities() {
+      const activities = await getUserActivities();
+
+      if (!isMounted) {
+        return;
+      }
+
+      setActivityRows(
+        activities.map((entry) => ({
+          time: new Date(entry.timestamp).toLocaleString("en-US", {
+            month: "short",
+            day: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          action: entry.action,
+          entity: entry.entity,
+          details: entry.description,
+        }))
+      );
+    }
+
+    loadActivities();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleExportReports = () => {

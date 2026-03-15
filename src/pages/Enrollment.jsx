@@ -11,7 +11,7 @@ function Enrollment() {
   const [studentStatus, setStudentStatus] = useState({ loading: true, error: "" });
   const [searchValue, setSearchValue] = useState("");
   const [actionMessage, setActionMessage] = useState({ type: "", text: "" });
-  const [records, setRecords] = useState(() => getEnrollmentRecords());
+  const [records, setRecords] = useState([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -44,7 +44,18 @@ function Enrollment() {
       }
     }
 
+    async function loadEnrollmentRecords() {
+      const nextRecords = await getEnrollmentRecords();
+
+      if (!isMounted) {
+        return;
+      }
+
+      setRecords(nextRecords);
+    }
+
     loadStudents();
+    loadEnrollmentRecords();
 
     return () => {
       isMounted = false;
@@ -82,14 +93,14 @@ function Enrollment() {
     });
   }, [students, searchValue]);
 
-  const handleEnrollStudent = (student) => {
+  const handleEnrollStudent = async (student) => {
     if (!student) {
       setActionMessage({ type: "error", text: "No student selected for enrollment." });
       return;
     }
 
-    const record = enrollStudentRecord(student);
-    setRecords(getEnrollmentRecords());
+    const record = await enrollStudentRecord(student);
+    setRecords(await getEnrollmentRecords());
 
     logUserActivity({
       action: "Enroll",
@@ -167,7 +178,7 @@ function Enrollment() {
                   <button
                     type="button"
                     className="ghost-btn small"
-                    onClick={() => handleEnrollStudent(student)}
+                    onClick={async () => handleEnrollStudent(student)}
                   >
                     Enroll
                   </button>

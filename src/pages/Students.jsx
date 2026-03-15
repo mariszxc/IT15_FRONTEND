@@ -128,7 +128,7 @@ function Students() {
     try {
       const response = await api.get(`/students/${student.id}`);
       const profile = response.data?.data || student;
-      const enrollment = getEnrollmentRecordForStudent(profile || student);
+      const enrollment = await getEnrollmentRecordForStudent(profile || student);
       setSelectedStudent({ ...profile, enrollment });
       setProfileStatus({ loading: false, error: "" });
       logUserActivity({
@@ -137,7 +137,7 @@ function Students() {
         description: `Viewed profile of ${student.first_name} ${student.last_name}.`,
       });
     } catch (error) {
-      const enrollment = getEnrollmentRecordForStudent(student);
+      const enrollment = await getEnrollmentRecordForStudent(student);
       setSelectedStudent({ ...student, enrollment });
       setProfileStatus({
         loading: false,

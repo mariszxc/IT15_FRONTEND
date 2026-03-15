@@ -303,6 +303,166 @@ Returns school-day calendar rows used in the Academic Calendar modal.
 
 ---
 
+## Enrollments
+
+### GET /api/enrollments
+Returns enrollment records for the authenticated user.
+
+**Headers**
+- `Authorization: Bearer <token>`
+
+**Query Parameters**
+- `per_page` (number, optional)
+- `student_id` (number, optional)
+- `student_number` (string, optional)
+
+**Success Response (200)**
+```json
+{
+  "data": [
+    {
+      "id": "1",
+      "studentId": "501",
+      "studentNumber": "000501",
+      "studentName": "Maris Bautista",
+      "batch": "March 2026",
+      "submittedAt": "2026-03-15T11:15:00.000000Z",
+      "submitted": true,
+      "pending": false,
+      "approved": true,
+      "enrollmentStatus": "Enrolled"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "per_page": 25,
+    "total": 1
+  }
+}
+```
+
+---
+
+### POST /api/enrollments
+Creates or updates (upsert) an enrollment record for a student.
+
+**Headers**
+- `Authorization: Bearer <token>`
+
+**Request Body**
+```json
+{
+  "studentId": 501,
+  "studentNumber": "000501",
+  "studentName": "Maris Bautista",
+  "batch": "March 2026",
+  "submittedAt": "2026-03-15T11:15:00.000000Z",
+  "submitted": true,
+  "pending": false,
+  "approved": true,
+  "enrollmentStatus": "Enrolled"
+}
+```
+
+**Success Response (200)**
+```json
+{
+  "data": {
+    "id": "1",
+    "studentId": "501",
+    "studentNumber": "000501",
+    "studentName": "Maris Bautista",
+    "batch": "March 2026",
+    "submittedAt": "2026-03-15T11:15:00.000000Z",
+    "submitted": true,
+    "pending": false,
+    "approved": true,
+    "enrollmentStatus": "Enrolled"
+  }
+}
+```
+
+---
+
+## Activities
+
+### GET /api/activities
+Returns activity logs for the authenticated user.
+
+**Headers**
+- `Authorization: Bearer <token>`
+
+**Query Parameters**
+- `per_page` (number, optional)
+
+**Success Response (200)**
+```json
+{
+  "data": [
+    {
+      "id": "12",
+      "actor": {
+        "id": 1,
+        "name": "Student User",
+        "email": "student@example.com"
+      },
+      "action": "Enroll",
+      "entity": "Student",
+      "description": "Enrolled student Maris Bautista.",
+      "metadata": {
+        "studentId": 501,
+        "studentNumber": "000501",
+        "batch": "March 2026"
+      },
+      "timestamp": "2026-03-15T11:15:00.000000Z"
+    }
+  ]
+}
+```
+
+---
+
+### POST /api/activities
+Stores a user activity log entry.
+
+**Headers**
+- `Authorization: Bearer <token>`
+
+**Request Body**
+```json
+{
+  "action": "Enroll",
+  "entity": "Student",
+  "description": "Enrolled student Maris Bautista.",
+  "metadata": {
+    "studentId": 501,
+    "studentNumber": "000501",
+    "batch": "March 2026"
+  },
+  "timestamp": "2026-03-15T11:15:00.000000Z"
+}
+```
+
+**Success Response (200)**
+```json
+{
+  "data": {
+    "id": "12",
+    "action": "Enroll",
+    "entity": "Student",
+    "description": "Enrolled student Maris Bautista.",
+    "metadata": {
+      "studentId": 501,
+      "studentNumber": "000501",
+      "batch": "March 2026"
+    },
+    "timestamp": "2026-03-15T11:15:00.000000Z"
+  }
+}
+```
+
+---
+
 ## Weather
 
 ### GET /api/weather/current
@@ -377,6 +537,11 @@ These resources are listed in the project README and are expected to support sta
 
 - `/api/programs`
 - `/api/subjects`
+
+### Database Persistence Notes
+- Enrollment records are stored in table: `enrollment_records`.
+- Activity logs are stored in table: `activity_logs`.
+- Both are tied to authenticated API users and persist in MySQL (`bautista_backend`).
 
 Typical methods:
 - `GET /api/{resource}`

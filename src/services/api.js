@@ -45,5 +45,9 @@ export const logoutRequest = () => api.post("/logout");
 export const dashboardMetricsRequest = () => api.get("/dashboard");
 export const coursesRequest = (params = {}) => api.get("/courses", { params });
 export const schoolDaysRequest = (params = {}) => api.get("/school-days", { params });
+export const enrollmentRecordsRequest = (params = {}) => api.get("/enrollments", { params });
+export const enrollStudentRequest = (payload) => api.post("/enrollments", payload);
+export const activityLogsRequest = (params = {}) => api.get("/activities", { params });
+export const storeActivityRequest = (payload) => api.post("/activities", payload);
 
 export default api;
