@@ -238,6 +238,7 @@ body {
   backdrop-filter: blur(18px);
   box-shadow: 0 24px 72px rgba(8, 6, 35, 0.45);
   color: #fff;
+  overflow: visible;
 }
 
 .login-modal h2 {
@@ -315,13 +316,20 @@ body {
 
 .close-btn {
   position: absolute;
-  right:12px;
-  top: 8px;
+  right: 12px;
+  top: 10px;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
   border: none;
-  background: transparent;
+  background: rgba(0, 0, 0, 0.12);
   color: rgba(255, 255, 255, 0.95);
-  font-size: 25px;
+  font-size: 22px;
   font-weight: 100;
   line-height: 1;
   cursor: pointer;
+  z-index: 3;
 }

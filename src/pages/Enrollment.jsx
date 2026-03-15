@@ -93,9 +93,36 @@ function Enrollment() {
     });
   }, [students, searchValue]);
 
+  const isAlreadyEnrolled = (student) => {
+    if (!student) {
+      return false;
+    }
+
+    const studentId = String(student.id ?? "");
+    const studentNumber = String(student.student_number || "").trim().toLowerCase();
+
+    return records.some((record) => {
+      const recordStudentId = String(record.studentId ?? "");
+      const recordStudentNumber = String(record.studentNumber || "").trim().toLowerCase();
+
+      return (
+        (studentId && recordStudentId === studentId) ||
+        (studentNumber && recordStudentNumber === studentNumber)
+      );
+    });
+  };
+
   const handleEnrollStudent = async (student) => {
     if (!student) {
       setActionMessage({ type: "error", text: "No student selected for enrollment." });
+      return;
+    }
+
+    if (isAlreadyEnrolled(student)) {
+      setActionMessage({
+        type: "error",
+        text: `${student.first_name || "This student"} is already enrolled.`,
+      });
       return;
     }
 

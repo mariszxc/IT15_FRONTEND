@@ -18,6 +18,7 @@ function Students() {
   const [profileStatus, setProfileStatus] = useState({ loading: false, error: "" });
   const [showAddForm, setShowAddForm] = useState(false);
   const [search, setSearch] = useState("");
+  const [studentActionMessage, setStudentActionMessage] = useState({ type: "", message: "" });
 
   const loadStudents = async () => {
     setStudentsStatus({ loading: true, error: "" });
@@ -151,6 +152,48 @@ function Students() {
     setProfileStatus({ loading: false, error: "" });
   };
 
+  const handleDeleteStudent = async (student) => {
+    if (!student?.id) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete ${student.first_name || ""} ${student.last_name || ""}? This action cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setStudentActionMessage({ type: "", message: "" });
+
+    try {
+      await api.delete(`/students/${student.id}`);
+
+      logUserActivity({
+        action: "Delete",
+        entity: "Student",
+        description: `Deleted student ${student.first_name} ${student.last_name}.`,
+        metadata: {
+          studentId: student.id,
+          studentNumber: student.student_number,
+        },
+      });
+
+      if (selectedStudent?.id === student.id) {
+        handleCloseProfile();
+      }
+
+      setStudentActionMessage({ type: "success", message: "Student deleted successfully." });
+      await loadStudents();
+    } catch (error) {
+      setStudentActionMessage({
+        type: "error",
+        message: error.response?.data?.message || "Unable to delete student. Please try again.",
+      });
+    }
+  };
+
   return (
     <div className="page-shell">
       <FilterBar
@@ -183,6 +226,12 @@ function Students() {
           </div>
         </div>
 
+        {studentActionMessage.message && (
+          <p className={`dashboard-feedback ${studentActionMessage.type === "error" ? "error" : ""}`}>
+            {studentActionMessage.message}
+          </p>
+        )}
+
         {studentsStatus.loading && <p className="dashboard-feedback">Loading students...</p>}
         {studentsStatus.error && <p className="dashboard-feedback error">{studentsStatus.error}</p>}
 
@@ -197,13 +246,22 @@ function Students() {
                       {student.first_name} {student.last_name}
                     </strong>
                   </div>
-                  <button
-                    type="button"
-                    className="ghost-btn small"
-                    onClick={() => handleViewProfile(student)}
-                  >
-                    View Profile
-                  </button>
+                  <div className="student-row-actions">
+                    <button
+                      type="button"
+                      className="ghost-btn small"
+                      onClick={() => handleViewProfile(student)}
+                    >
+                      View Profile
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost-btn small danger-btn"
+                      onClick={() => handleDeleteStudent(student)}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </li>
             ))}

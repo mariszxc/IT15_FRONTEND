@@ -9,7 +9,7 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("Login failed. Please try again.");
+  const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -67,14 +67,26 @@ function Login() {
         <h2>STUDENT PORTAL</h2>
         {!showLogin && <p>Login to access your account</p>}
 
-        <button className="welcome-login-btn" onClick={() => setShowLogin(true)}>
+        <button
+          className="welcome-login-btn"
+          onClick={() => {
+            setErrorMessage("");
+            setShowLogin(true);
+          }}
+        >
           Login
         </button>
       </div>
 
       {showLogin && (
         <>
-          <div className="overlay" onClick={() => setShowLogin(false)}></div>
+          <div
+            className="overlay"
+            onClick={() => {
+              setErrorMessage("");
+              setShowLogin(false);
+            }}
+          ></div>
 
           <div className="login-modal">
             <h2>Login</h2>
@@ -115,7 +127,13 @@ function Login() {
 
             </form>
 
-            <button className="close-btn" onClick={() => setShowLogin(false)}>
+            <button
+              className="close-btn"
+              onClick={() => {
+                setErrorMessage("");
+                setShowLogin(false);
+              }}
+            >
               ✕
             </button>
           </div>
