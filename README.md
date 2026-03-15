@@ -5,6 +5,42 @@ This project contains:
 - Frontend in repository root (src/, React + Vite)
 - Backend in IT15_BACKEND/ (Laravel REST API + Sanctum auth)
 
+## 5. Submission Guidelines
+
+### 5.1 Required Deliverables
+
+#### GitHub Repository
+
+- Complete source code for both frontend and backend
+- Detailed `README.md` with setup instructions
+- `.env.example` file with required environment variables
+
+#### Documentation
+
+- Screenshots of the working application (minimum 5)
+- API documentation (endpoints and expected responses)
+- List of technologies used with versions
+- 3–5 minute video demonstration
+
+### 5.2 Setup Instructions
+
+Include the following setup steps in your local environment.
+
+```bash
+# Backend Setup
+cd ../IT15_BACKEND
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+php artisan serve
+
+# Frontend Setup
+cd ../IT15_FRONTEND
+npm install
+npm run dev
+```
+
 ## Features
 
 - User authentication (register/login/logout/me)
@@ -79,6 +115,13 @@ Seeded login:
   - npm run dev
 
 Frontend URL: `http://localhost:5173`
+
+## Documentation Checklist
+
+- Add at least 5 screenshots in a `docs/screenshots` folder.
+- Document API request/response samples for each endpoint group.
+- Include exact package/framework versions used by frontend and backend.
+- Provide a 3–5 minute demo video link in this README.
 
 ## Security Notes
 

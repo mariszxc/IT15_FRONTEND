@@ -1,19 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import WeatherWidget from "./weather/WeatherWidget";
-import { schoolDaysRequest } from "../services/api";
+import AcademicCalendar from "./calendar/AcademicCalendar";
 
 export function TopbarUtilities() {
   const [weatherStatus, setWeatherStatus] = useState("idle");
   const [temperature, setTemperature] = useState(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [calendarRows, setCalendarRows] = useState([]);
-  const [calendarTotal, setCalendarTotal] = useState(0);
-  const [calendarMonthCursor, setCalendarMonthCursor] = useState(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  });
-  const [calendarLoading, setCalendarLoading] = useState(false);
-  const [calendarError, setCalendarError] = useState("");
   const [isWeatherOpen, setIsWeatherOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
@@ -65,108 +57,9 @@ export function TopbarUtilities() {
       ? "Unavailable"
       : "Loading...";
 
-  const formatDateKey = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-  };
-
-  const monthTitle = calendarMonthCursor.toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
-  });
-
-  const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-  const calendarMap = useMemo(() => {
-    const map = new Map();
-
-    for (const row of calendarRows) {
-      if (row?.date) {
-        map.set(row.date, row);
-      }
-    }
-
-    return map;
-  }, [calendarRows]);
-
-  const monthCells = useMemo(() => {
-    const year = calendarMonthCursor.getFullYear();
-    const month = calendarMonthCursor.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const offset = firstDay.getDay();
-    const cells = [];
-
-    for (let index = 0; index < offset; index += 1) {
-      cells.push({ key: `blank-${index}`, isBlank: true });
-    }
-
-    for (let day = 1; day <= daysInMonth; day += 1) {
-      const date = new Date(year, month, day);
-      const key = formatDateKey(date);
-      const row = calendarMap.get(key) || null;
-
-      cells.push({
-        key,
-        day,
-        row,
-        isBlank: false,
-      });
-    }
-
-    return cells;
-  }, [calendarMonthCursor, calendarMap]);
-
-  const monthEvents = useMemo(() => {
-    const year = calendarMonthCursor.getFullYear();
-    const month = calendarMonthCursor.getMonth();
-
-    return calendarRows
-      .filter((row) => {
-        if (!row?.event || !row?.date) {
-          return false;
-        }
-
-        const date = new Date(`${row.date}T00:00:00`);
-        return date.getFullYear() === year && date.getMonth() === month;
-      })
-      .sort((a, b) => a.date.localeCompare(b.date));
-  }, [calendarRows, calendarMonthCursor]);
-
   async function openAcademicCalendar() {
     setIsCalendarOpen(true);
-    const today = new Date();
-    setCalendarMonthCursor(new Date(today.getFullYear(), today.getMonth(), 1));
-
-    if (calendarRows.length > 0 || calendarLoading) {
-      return;
-    }
-
-    setCalendarLoading(true);
-    setCalendarError("");
-
-    try {
-      const response = await schoolDaysRequest({ page: 1, per_page: 300 });
-      const rows = response?.data?.data || [];
-      const total = Number(response?.data?.meta?.total || rows.length || 0);
-      setCalendarRows(rows);
-      setCalendarTotal(total);
-    } catch (error) {
-      setCalendarRows([]);
-      setCalendarTotal(0);
-      setCalendarError(error.response?.data?.message || "Unable to load academic calendar records.");
-    } finally {
-      setCalendarLoading(false);
-    }
   }
-
-  const totalRecordedDays = calendarTotal || calendarRows.length;
-  const holidayCount = calendarRows.filter((item) => item.is_holiday).length;
-  const schoolDayCount = calendarRows.filter((item) => item.is_school_day).length;
-  const eventCount = calendarRows.filter((item) => item.event && item.event.trim().length > 0).length;
 
   function getBotReply(message) {
     const query = message.toLowerCase();
@@ -306,15 +199,14 @@ export function TopbarUtilities() {
       {isWeatherOpen ? (
         <div className="modal-backdrop" role="dialog" aria-modal="true">
           <div className="modal-card weather-modal weather-modal-card">
-            <div className="weather-modal-actions">
-              <button
-                type="button"
-                className="ghost-btn small"
-                onClick={() => setIsWeatherOpen(false)}
-              >
-                Close
-              </button>
-            </div>
+            <button
+              type="button"
+              className="modal-close-btn"
+              aria-label="Close"
+              onClick={() => setIsWeatherOpen(false)}
+            >
+              ×
+            </button>
             <div className="weather-modal-body">
               <WeatherWidget />
             </div>
@@ -325,145 +217,15 @@ export function TopbarUtilities() {
       {isCalendarOpen ? (
         <div className="modal-backdrop" role="dialog" aria-modal="true">
           <div className="modal-card academic-calendar-modal">
-            <div className="calendar-modal-header">
-              <div>
-                <p className="calendar-modal-title">Academic Calendar</p>
-                <span className="calendar-modal-subtitle">Recorded school days, attendance, holidays, and events</span>
-              </div>
-              <button
-                type="button"
-                className="ghost-btn small"
-                onClick={() => setIsCalendarOpen(false)}
-              >
-                Close
-              </button>
-            </div>
-
-            {calendarLoading ? (
-              <p className="calendar-status-text">Loading calendar records...</p>
-            ) : null}
-
-            {!calendarLoading && calendarError ? (
-              <div className="calendar-status-error" role="alert">
-                <p>{calendarError}</p>
-                <button type="button" className="ghost-btn small" onClick={openAcademicCalendar}>
-                  Retry
-                </button>
-              </div>
-            ) : null}
-
-            {!calendarLoading && !calendarError ? (
-              <>
-                <div className="calendar-month-nav">
-                  <button
-                    type="button"
-                    className="ghost-btn small"
-                    onClick={() =>
-                      setCalendarMonthCursor((previous) =>
-                        new Date(previous.getFullYear(), previous.getMonth() - 1, 1)
-                      )
-                    }
-                  >
-                    ← Prev
-                  </button>
-                  <strong>{monthTitle}</strong>
-                  <button
-                    type="button"
-                    className="ghost-btn small"
-                    onClick={() =>
-                      setCalendarMonthCursor((previous) =>
-                        new Date(previous.getFullYear(), previous.getMonth() + 1, 1)
-                      )
-                    }
-                  >
-                    Next →
-                  </button>
-                </div>
-
-                <div className="academic-calendar-summary">
-                  <article className="calendar-summary-card">
-                    <span>Recorded Days</span>
-                    <strong>{totalRecordedDays}</strong>
-                  </article>
-                  <article className="calendar-summary-card">
-                    <span>School Days</span>
-                    <strong>{schoolDayCount}</strong>
-                  </article>
-                  <article className="calendar-summary-card">
-                    <span>Holidays</span>
-                    <strong>{holidayCount}</strong>
-                  </article>
-                  <article className="calendar-summary-card">
-                    <span>Recorded Events</span>
-                    <strong>{eventCount}</strong>
-                  </article>
-                </div>
-
-                {calendarRows.length === 0 ? (
-                  <p className="calendar-status-text">No recorded calendar days found yet.</p>
-                ) : (
-                  <div className="academic-calendar-monthly-layout">
-                    <div className="academic-calendar-grid-wrap">
-                      <div className="academic-calendar-weekdays">
-                        {dayLabels.map((label) => (
-                          <span key={label}>{label}</span>
-                        ))}
-                      </div>
-                      <div className="academic-calendar-grid">
-                        {monthCells.map((cell) => {
-                          if (cell.isBlank) {
-                            return <div key={cell.key} className="calendar-day-cell blank" aria-hidden="true" />;
-                          }
-
-                          const row = cell.row;
-                          const attendanceText = row?.is_school_day
-                            ? `${row.attendance_count} · ${Number(row.attendance_rate).toFixed(0)}%`
-                            : "No class";
-
-                          return (
-                            <div
-                              key={cell.key}
-                              className={`calendar-day-cell ${
-                                row?.is_holiday ? "holiday" : row?.is_school_day ? "school-day" : "other"
-                              }`}
-                            >
-                              <div className="calendar-day-top">
-                                <strong>{cell.day}</strong>
-                                {row?.is_holiday ? (
-                                  <span className="calendar-type-badge holiday">Holiday</span>
-                                ) : row?.is_school_day ? (
-                                  <span className="calendar-type-badge school-day">School Day</span>
-                                ) : (
-                                  <span className="calendar-type-badge other">Other</span>
-                                )}
-                              </div>
-                              <p className="calendar-day-attendance">{attendanceText}</p>
-                              <p className="calendar-day-event">{row?.event || "—"}</p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="academic-calendar-events-panel">
-                      <h4>Month Events</h4>
-                      {monthEvents.length === 0 ? (
-                        <p className="calendar-status-text">No scheduled events for this month.</p>
-                      ) : (
-                        <ul>
-                          {monthEvents.map((eventItem) => (
-                            <li key={`${eventItem.date}-${eventItem.event}`}>
-                              <strong>{eventItem.date}</strong>
-                              <span>{eventItem.event}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : null}
+            <button
+              type="button"
+              className="modal-close-btn"
+              aria-label="Close"
+              onClick={() => setIsCalendarOpen(false)}
+            >
+              ×
+            </button>
+            <AcademicCalendar />
           </div>
         </div>
       ) : null}

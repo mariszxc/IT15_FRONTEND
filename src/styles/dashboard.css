@@ -1217,6 +1217,29 @@ button:hover:not(:disabled),
   border-radius: 16px;
   padding: 18px;
   box-shadow: 0 24px 40px rgba(10, 10, 30, 0.3);
+  position: relative;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(45, 42, 99, 0.08);
+  color: var(--purple-900);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close-btn:hover {
+  background: rgba(106, 75, 196, 0.18);
 }
 
 .modal-actions {
@@ -1233,7 +1256,7 @@ button:hover:not(:disabled),
 
 .course-details-content {
   background: transparent;
-  padding: 0;
+  padding: 18px 0 0;
   border-radius: 0;
   box-shadow: none;
 }
@@ -1247,30 +1270,38 @@ button:hover:not(:disabled),
 }
 
 .academic-calendar-modal {
-  width: min(980px, 100%);
+  width: min(950px, 100%);
   border: 1px solid rgba(45, 42, 99, 0.12);
   background: linear-gradient(180deg, #fcfbff 0%, #ffffff 100%);
 }
 
 .calendar-modal-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
   gap: 12px;
-  margin-bottom: 12px;
+  margin: 10px 36px 12px 0;
+}
+
+.calendar-modal-heading-wrap {
+  width: 100%;
+  text-align: center;
 }
 
 .calendar-modal-title {
-  font-size: 20px;
+  font-size: 25px;
   font-weight: 800;
   color: var(--purple-900);
   line-height: 1.1;
   margin-bottom: 4px;
+  text-align: center;
 }
 
 .calendar-modal-subtitle {
   font-size: 13px;
   color: var(--text-muted);
+  display: inline-block;
+  text-align: center;
 }
 
 .calendar-status-text {
@@ -1388,7 +1419,8 @@ button:hover:not(:disabled),
 }
 
 .calendar-day-cell.holiday {
-  background: rgba(245, 196, 90, 0.12);
+  background: rgba(220, 53, 69, 0.1);
+  border-color: rgba(220, 53, 69, 0.32);
 }
 
 .calendar-day-cell.school-day {
@@ -1397,6 +1429,10 @@ button:hover:not(:disabled),
 
 .calendar-day-cell.other {
   background: rgba(106, 75, 196, 0.08);
+}
+
+.calendar-day-cell.today {
+  box-shadow: 0 0 0 2px rgba(106, 75, 196, 0.32) inset;
 }
 
 .calendar-day-top {
@@ -1519,13 +1555,67 @@ button:hover:not(:disabled),
 }
 
 .calendar-type-badge.holiday {
-  background: rgba(245, 196, 90, 0.2);
-  color: #996404;
+  background: rgba(220, 53, 69, 0.18);
+  color: #9d2031;
 }
 
 .calendar-type-badge.other {
   background: rgba(106, 75, 196, 0.2);
   color: var(--purple-700);
+}
+
+.holiday-name {
+  color: #8e1f32;
+  font-weight: 700;
+}
+
+.selected-holiday-panel {
+  border: 1px solid rgba(220, 53, 69, 0.24);
+  border-radius: 10px;
+  background: rgba(220, 53, 69, 0.06);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.selected-holiday-panel strong {
+  color: #8e1f32;
+  font-size: 14px;
+}
+
+.selected-holiday-panel span,
+.selected-holiday-panel p,
+.selected-holiday-panel small {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .academic-calendar-modal {
+    width: min(100%, 100%);
+  }
+
+  .calendar-modal-header {
+    margin-right: 0;
+  }
+
+  .academic-calendar-grid {
+    gap: 6px;
+  }
+
+  .calendar-day-cell {
+    min-height: 82px;
+    padding: 6px;
+  }
+
+  .calendar-day-top strong,
+  .calendar-day-event,
+  .calendar-day-attendance {
+    font-size: 10px;
+  }
 }
 
 .info-card {

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../services/api";
 import { logUserActivity } from "../utils/activityLog";
 import { getEnrollmentRecordForStudent } from "../utils/enrollmentStore";
+import FilterBar from "../components/FilterBar";
 
 function Students() {
   const [studentForm, setStudentForm] = useState({
@@ -17,7 +18,6 @@ function Students() {
   const [profileStatus, setProfileStatus] = useState({ loading: false, error: "" });
   const [showAddForm, setShowAddForm] = useState(false);
   const [search, setSearch] = useState("");
-  const [searchMode, setSearchMode] = useState("name");
 
   const loadStudents = async () => {
     setStudentsStatus({ loading: true, error: "" });
@@ -48,13 +48,10 @@ function Students() {
       return true;
     }
 
-    if (searchMode === "student_number") {
-      return String(student.student_number || "").toLowerCase().includes(searchKey);
-    }
-
     const fullName = `${student.first_name || ""} ${student.last_name || ""}`.trim().toLowerCase();
 
     return (
+      String(student.student_number || "").toLowerCase().includes(searchKey) ||
       fullName.includes(searchKey) ||
       String(student.first_name || "").toLowerCase().includes(searchKey) ||
       String(student.last_name || "").toLowerCase().includes(searchKey)
@@ -156,39 +153,34 @@ function Students() {
 
   return (
     <div className="page-shell">
+      <FilterBar
+        title="Student Filters"
+        actions={(
+          <button
+            className="primary-btn"
+            type="button"
+            onClick={() => setShowAddForm((prev) => !prev)}
+          >
+            Add Student
+          </button>
+        )}
+      >
+        <label className="filter-field">
+          <input
+            type="text"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search by student number or name"
+          />
+        </label>
+      </FilterBar>
+
       <section className="info-card">
         <div className="table-header">
           <div>
             <h2>Students</h2>
             <span className="chart-subtitle">Showing {filteredStudents.length} of {students.length} students</span>
           </div>
-          <button
-            className="primary-btn"
-            type="button"
-            onClick={() => setShowAddForm((prev) => !prev)}
-          >
-            {showAddForm ? "Close" : "Add Student"}
-          </button>
-          <label className="filter-field" style={{ minWidth: 300 }}>
-            Search students by
-            <select
-              value={searchMode}
-              onChange={(event) => setSearchMode(event.target.value)}
-            >
-              <option value="name">Name</option>
-              <option value="student_number">Student Number</option>
-            </select>
-            <input
-              type="text"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={
-                searchMode === "student_number"
-                  ? "Search by student number"
-                  : "Search by student name"
-              }
-            />
-          </label>
         </div>
 
         {studentsStatus.loading && <p className="dashboard-feedback">Loading students...</p>}
@@ -222,13 +214,13 @@ function Students() {
       {selectedStudent && (
         <div className="modal-backdrop" role="dialog" aria-modal="true">
           <div className="modal-card">
+            <button type="button" className="modal-close-btn" onClick={handleCloseProfile} aria-label="Close">
+              ×
+            </button>
             <div className="table-header">
               <div>
                 <h2>Student Profile</h2>
               </div>
-              <button type="button" className="ghost-btn small" onClick={handleCloseProfile}>
-                Close
-              </button>
             </div>
 
             {profileStatus.error && (
@@ -284,6 +276,17 @@ function Students() {
       {showAddForm && (
         <div className="modal-backdrop" role="dialog" aria-modal="true">
           <div className="modal-card">
+            <button
+              type="button"
+              className="modal-close-btn"
+              onClick={() => {
+                handleFormCancel();
+                setShowAddForm(false);
+              }}
+              aria-label="Close"
+            >
+              ×
+            </button>
             <div className="table-header">
               <div>
                 <h2>Add Student Information</h2>
@@ -297,8 +300,7 @@ function Students() {
                   <input
                     type="text"
                     name="studentNumber"
-                    value=""
-                    placeholder="Enter your student number"
+                    value="Auto-generated (6 digits)"
                     disabled
                     readOnly
                   />
@@ -341,16 +343,6 @@ function Students() {
               <div className="student-form-actions">
                 <button type="submit" className="action-btn save-btn" disabled={isSaving}>
                   {isSaving ? "Saving..." : "Save"}
-                </button>
-                <button
-                  type="button"
-                  className="action-btn cancel-btn"
-                  onClick={() => {
-                    handleFormCancel();
-                    setShowAddForm(false);
-                  }}
-                >
-                  Cancel
                 </button>
               </div>
 

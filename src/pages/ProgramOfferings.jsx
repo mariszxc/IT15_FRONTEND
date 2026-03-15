@@ -5,7 +5,7 @@ import ProgramDetails from "../components/ProgramDetails";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { coursesRequest } from "../services/api";
 import { logUserActivity } from "../utils/activityLog";
-import { applyCourseOverrides, saveCourseOverride } from "../utils/catalogOverrides";
+import { addCourseRecord, applyCourseOverrides, saveCourseOverride, saveAddedCourses } from "../utils/catalogOverrides";
 
 function ProgramOfferings() {
   const [programs, setPrograms] = useState([]);
@@ -17,6 +17,7 @@ function ProgramOfferings() {
   const [selectedCode, setSelectedCode] = useState("");
   const [showCourseDetailsModal, setShowCourseDetailsModal] = useState(false);
   const [isEditingCourse, setIsEditingCourse] = useState(false);
+  const [isAddingCourse, setIsAddingCourse] = useState(false);
   const [courseDraft, setCourseDraft] = useState(null);
 
   useEffect(() => {
@@ -32,9 +33,9 @@ function ProgramOfferings() {
 
         const mappedCourses = records.map((course) => ({
           id: `course-${course.id}`,
-          code: course.code,
+          code: String(course.code || ""),
           name: course.name,
-          fullName: course.name,
+          fullName: String(course.name || "Untitled Course"),
           type: "Bachelor's Degree",
           duration: "4 years",
           totalUnits: Number(course.credits || 0),
@@ -75,11 +76,16 @@ function ProgramOfferings() {
 
   const filteredPrograms = useMemo(() => {
     return programs.filter((program) => {
+      const code = String(program.code || "");
+      const fullName = String(program.fullName || program.name || "");
+      const status = String(program.status || "active");
+      const type = String(program.type || "Bachelor's Degree");
+
       const matchesSearch =
-        program.code.toLowerCase().includes(search.toLowerCase()) ||
-        program.fullName.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus = statusFilter === "all" || program.status === statusFilter;
-      const matchesType = typeFilter === "all" || program.type === typeFilter;
+        code.toLowerCase().includes(search.toLowerCase()) ||
+        fullName.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = statusFilter === "all" || status === statusFilter;
+      const matchesType = typeFilter === "all" || type === typeFilter;
 
       return matchesSearch && matchesStatus && matchesType;
     });
@@ -109,7 +115,7 @@ function ProgramOfferings() {
       return;
     }
 
-    if (!isEditingCourse) {
+    if (!isEditingCourse && !isAddingCourse) {
       setIsEditingCourse(true);
       return;
     }
@@ -120,11 +126,45 @@ function ProgramOfferings() {
       totalUnits: Number(courseDraft.totalUnits || 0),
     };
 
+    if (isAddingCourse) {
+      const newCourse = {
+        ...normalizedDraft,
+        id: `local-course-${Date.now()}`,
+        code: String(normalizedDraft.code || "NEW").trim().toUpperCase(),
+      };
+
+      setPrograms((previous) => [...previous, newCourse]);
+      setSelectedCode(newCourse.code);
+      addCourseRecord(newCourse);
+
+      logUserActivity({
+        action: "Add",
+        entity: "Course",
+        description: `Added course ${newCourse.code}.`,
+      });
+
+      setIsAddingCourse(false);
+      setShowCourseDetailsModal(false);
+      return;
+    }
+
     setPrograms((previous) =>
       previous.map((program) => (program.id === normalizedDraft.id ? normalizedDraft : program))
     );
     setSelectedCode(normalizedDraft.code);
-    saveCourseOverride(normalizedDraft);
+
+    if (String(normalizedDraft.id || "").startsWith("local-course-")) {
+      setPrograms((previous) => {
+        const next = previous.map((program) =>
+          program.id === normalizedDraft.id ? normalizedDraft : program
+        );
+        const localCourses = next.filter((item) => String(item.id || "").startsWith("local-course-"));
+        saveAddedCourses(localCourses);
+        return next;
+      });
+    } else {
+      saveCourseOverride(normalizedDraft);
+    }
 
     logUserActivity({
       action: "Update",
@@ -152,6 +192,31 @@ function ProgramOfferings() {
     <div className="page-shell">
       <FilterBar
         title="Course Filters"
+        actions={(
+          <button
+            className="primary-btn"
+            type="button"
+            onClick={() => {
+              setCourseDraft({
+                code: "",
+                fullName: "",
+                name: "",
+                type: "Bachelor's Degree",
+                duration: "4 years",
+                totalUnits: 0,
+                status: "active",
+                department: "",
+                description: "",
+                yearLevels: {},
+              });
+              setIsAddingCourse(true);
+              setIsEditingCourse(true);
+              setShowCourseDetailsModal(true);
+            }}
+          >
+            Add Course
+          </button>
+        )}
       >
         <label className="filter-field">
           Search by code or name
@@ -188,7 +253,7 @@ function ProgramOfferings() {
         onSelect={handleSelectProgram}
       />
 
-      {showCourseDetailsModal && selectedProgram ? (
+      {showCourseDetailsModal && (selectedProgram || courseDraft) ? (
         <div
           className="modal-backdrop"
           role="presentation"
@@ -201,11 +266,23 @@ function ProgramOfferings() {
             aria-label="Course details"
             onClick={(event) => event.stopPropagation()}
           >
+            <button
+              type="button"
+              className="modal-close-btn"
+              aria-label="Close"
+              onClick={() => {
+                setShowCourseDetailsModal(false);
+                setIsAddingCourse(false);
+                setIsEditingCourse(false);
+              }}
+            >
+              ×
+            </button>
             {isEditingCourse && courseDraft ? (
               <section className="course-details-content">
                 <div className="table-header">
                   <div>
-                    <p className="chart-title">Edit Course</p>
+                    <p className="chart-title">{isAddingCourse ? "Add Course" : "Edit Course"}</p>
                     <span className="chart-subtitle">Update course information</span>
                   </div>
                 </div>
@@ -280,14 +357,7 @@ function ProgramOfferings() {
                 type="button"
                 onClick={handleEditOrSave}
               >
-                {isEditingCourse ? "Save" : "Edit"}
-              </button>
-              <button
-                className="ghost-btn"
-                type="button"
-                onClick={() => setShowCourseDetailsModal(false)}
-              >
-                Close
+                {isAddingCourse || isEditingCourse ? "Save" : "Edit"}
               </button>
             </div>
           </section>

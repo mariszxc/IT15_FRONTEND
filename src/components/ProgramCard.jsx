@@ -1,6 +1,8 @@
 import React from "react";
 
 function ProgramCard({ program, selected, onClick }) {
+  const status = String(program.status || "active");
+
   return (
     <button
       className={`program-card ${selected ? "selected" : ""}`}
@@ -9,8 +11,8 @@ function ProgramCard({ program, selected, onClick }) {
     >
       <div className="program-card-header">
         <h3>{program.code}</h3>
-        <span className={`status-pill ${program.status.replace(/\s+/g, "-")}`}>
-          {program.status}
+        <span className={`status-pill ${status.replace(/\s+/g, "-")}`}>
+          {status}
         </span>
       </div>
       <p className="program-name">{program.fullName}</p>

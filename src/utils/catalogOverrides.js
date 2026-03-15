@@ -1,4 +1,5 @@
 const COURSE_OVERRIDES_KEY = "course_overrides";
+const ADDED_COURSES_KEY = "added_courses";
 const SUBJECT_RECORDS_KEY = "subject_records";
 
 const readJson = (key, fallback) => {
@@ -26,11 +27,18 @@ export const getCourseOverrides = () => {
 
 export const applyCourseOverrides = (courses) => {
   const overrides = getCourseOverrides();
+  const addedCourses = readJson(ADDED_COURSES_KEY, []);
 
-  return courses.map((course) => {
+  const baseCourses = courses.map((course) => {
     const patch = overrides[course.id];
     return patch ? { ...course, ...patch } : course;
   });
+
+  if (!Array.isArray(addedCourses) || addedCourses.length === 0) {
+    return baseCourses;
+  }
+
+  return [...baseCourses, ...addedCourses];
 };
 
 export const saveCourseOverride = (course) => {
@@ -52,6 +60,16 @@ export const saveCourseOverride = (course) => {
   };
 
   writeJson(COURSE_OVERRIDES_KEY, overrides);
+};
+
+export const addCourseRecord = (course) => {
+  const addedCourses = readJson(ADDED_COURSES_KEY, []);
+  const nextCourses = Array.isArray(addedCourses) ? [...addedCourses, course] : [course];
+  writeJson(ADDED_COURSES_KEY, nextCourses);
+};
+
+export const saveAddedCourses = (courses) => {
+  writeJson(ADDED_COURSES_KEY, courses);
 };
 
 export const getPersistedSubjects = (fallbackSubjects = []) => {

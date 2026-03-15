@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { downloadCsv } from "../utils/exportCsv";
 import { logUserActivity } from "../utils/activityLog";
 import api from "../services/api";
 import { enrollStudentRecord, getEnrollmentRecords } from "../utils/enrollmentStore";
@@ -10,7 +9,6 @@ const getCurrentBatch = () =>
 function Enrollment() {
   const [students, setStudents] = useState([]);
   const [studentStatus, setStudentStatus] = useState({ loading: true, error: "" });
-  const [searchType, setSearchType] = useState("student_number");
   const [searchValue, setSearchValue] = useState("");
   const [actionMessage, setActionMessage] = useState({ type: "", text: "" });
   const [records, setRecords] = useState(() => getEnrollmentRecords());
@@ -61,8 +59,8 @@ function Enrollment() {
     return [
       { label: "Batch", count: records[0]?.batch || getCurrentBatch()},
       { label: "Submitted", count: String(submitted)},
-      { label: "Pending", count: String(pending), note: "Awaiting approval" },
-      { label: "Approved", count: String(approved), note: "Ready and enrolled" },
+      { label: "Pending", count: String(pending) },
+      { label: "Approved", count: String(approved) },
     ];
   }, [records]);
 
@@ -70,31 +68,19 @@ function Enrollment() {
     const key = searchValue.trim().toLowerCase();
 
     if (!key) {
-      return students.slice(0, 10);
+      return students;
     }
 
     return students.filter((student) => {
-      if (searchType === "student_number") {
-        return String(student.student_number || "").toLowerCase().includes(key);
-      }
-
       const fullName = `${student.first_name || ""} ${student.last_name || ""}`.trim().toLowerCase();
       return (
+        String(student.student_number || "").toLowerCase().includes(key) ||
         fullName.includes(key) ||
         String(student.first_name || "").toLowerCase().includes(key) ||
         String(student.last_name || "").toLowerCase().includes(key)
       );
     });
-  }, [students, searchType, searchValue]);
-
-  const handleExportEnrollment = () => {
-    downloadCsv("enrollment-pipeline.csv", enrollmentSummary);
-    logUserActivity({
-      action: "Export",
-      entity: "Enrollment",
-      description: "Exported enrollment pipeline report.",
-    });
-  };
+  }, [students, searchValue]);
 
   const handleEnrollStudent = (student) => {
     if (!student) {
@@ -123,10 +109,6 @@ function Enrollment() {
     setSearchValue("");
   };
 
-  const handleEnrollFirstMatch = () => {
-    handleEnrollStudent(filteredStudents[0]);
-  };
-
   return (
     <div className="page-shell">
       <section className="info-card">
@@ -134,35 +116,16 @@ function Enrollment() {
           <div>
             <h2>Enrollment Status</h2>
           </div>
-          <div className="filter-actions" style={{ gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-            <select
-              value={searchType}
-              onChange={(event) => setSearchType(event.target.value)}
-              className="ghost-btn"
-              style={{ borderRadius: 10, padding: "8px 12px", minWidth: 160 }}
-            >
-              <option value="student_number">Search by Student Number</option>
-              <option value="name">Search by Name</option>
-            </select>
+          <div style={{ minWidth: 280 }}>
+            <label className="filter-field">
             <input
               type="text"
               value={searchValue}
               onChange={(event) => setSearchValue(event.target.value)}
-              placeholder={
-                searchType === "student_number"
-                  ? "Enter student number"
-                  : "Enter student name"
-              }
-              className="ghost-btn"
-              style={{ borderRadius: 10, padding: "8px 12px", minWidth: 220 }}
+                placeholder="Search by student number or name"
             />
-            <button className="ghost-btn small" type="button" onClick={handleEnrollFirstMatch}>
-              Enroll
-            </button>
-            <button className="ghost-btn small" type="button" onClick={handleExportEnrollment}>
-              Export
-            </button>
-          </div>
+            </label>
+            </div>
         </div>
 
         {actionMessage.text && (
@@ -190,7 +153,7 @@ function Enrollment() {
               <li className="empty-state">No students found for the selected search option.</li>
             )}
 
-            {filteredStudents.slice(0, 12).map((student) => (
+            {filteredStudents.map((student) => (
               <li key={student.id} className="student-row">
                 <div className="student-row-main">
                   <div>

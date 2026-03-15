@@ -22,6 +22,7 @@ function SubjectOfferings() {
   const [selectedCode, setSelectedCode] = useState(subjectRecords[0]?.code || "");
   const [showSubjectModal, setShowSubjectModal] = useState(false);
   const [isEditingSubject, setIsEditingSubject] = useState(false);
+  const [isAddingSubject, setIsAddingSubject] = useState(false);
   const [subjectDraft, setSubjectDraft] = useState(null);
 
   const programOptions = useMemo(() => {
@@ -80,7 +81,7 @@ function SubjectOfferings() {
       return;
     }
 
-    if (!isEditingSubject) {
+    if (!isEditingSubject && !isAddingSubject) {
       setIsEditingSubject(true);
       return;
     }
@@ -95,6 +96,28 @@ function SubjectOfferings() {
         ? subjectDraft.corequisites
         : formatDependencies(subjectDraft.corequisites),
     };
+
+    if (isAddingSubject) {
+      const newSubject = {
+        ...normalizedDraft,
+        code: String(normalizedDraft.code || `SUBJ${subjectRecords.length + 1}`).toUpperCase(),
+      };
+
+      const nextSubjects = [...subjectRecords, newSubject];
+      setSubjectRecords(nextSubjects);
+      setSelectedCode(newSubject.code);
+      savePersistedSubjects(nextSubjects);
+
+      logUserActivity({
+        action: "Add",
+        entity: "Subject",
+        description: `Added subject ${newSubject.code}.`,
+      });
+
+      setIsAddingSubject(false);
+      setShowSubjectModal(false);
+      return;
+    }
 
     const nextSubjects = subjectRecords.map((subject) =>
       subject.code === selectedCode ? normalizedDraft : subject
@@ -118,6 +141,30 @@ function SubjectOfferings() {
     <div className="page-shell">
       <FilterBar
         title="Subject Filters"
+        actions={(
+          <button
+            className="primary-btn"
+            type="button"
+            onClick={() => {
+              setSubjectDraft({
+                code: "",
+                title: "",
+                units: 3,
+                semesterTerm: "",
+                programCode: "",
+                offeringMode: "semester",
+                prerequisites: [],
+                corequisites: [],
+                description: "",
+              });
+              setIsAddingSubject(true);
+              setIsEditingSubject(true);
+              setShowSubjectModal(true);
+            }}
+          >
+            Add Subject
+          </button>
+        )}
       >
         <label className="filter-field">
           Search by code or title
@@ -175,14 +222,26 @@ function SubjectOfferings() {
         onSelect={handleSelectSubject}
       />
 
-      {showSubjectModal && selectedSubject ? (
+      {showSubjectModal && (selectedSubject || subjectDraft) ? (
         <div className="modal-backdrop" role="presentation" onClick={() => setShowSubjectModal(false)}>
           <section className="modal-card course-details-modal" role="dialog" onClick={(event) => event.stopPropagation()}>
+            <button
+              type="button"
+              className="modal-close-btn"
+              aria-label="Close"
+              onClick={() => {
+                setShowSubjectModal(false);
+                setIsAddingSubject(false);
+                setIsEditingSubject(false);
+              }}
+            >
+              ×
+            </button>
             {isEditingSubject && subjectDraft ? (
               <section className="course-details-content">
                 <div className="table-header">
                   <div>
-                    <p className="chart-title">Edit Subject</p>
+                    <p className="chart-title">{isAddingSubject ? "Add Subject" : "Edit Subject"}</p>
                     <span className="chart-subtitle">Update subject information</span>
                   </div>
                 </div>
@@ -272,10 +331,7 @@ function SubjectOfferings() {
             )}
             <div className="modal-actions">
               <button className="primary-btn" type="button" onClick={handleEditOrSave}>
-                {isEditingSubject ? "Save" : "Edit"}
-              </button>
-              <button className="ghost-btn small" type="button" onClick={() => setShowSubjectModal(false)}>
-                Close
+                {isAddingSubject || isEditingSubject ? "Save" : "Edit"}
               </button>
             </div>
           </section>
